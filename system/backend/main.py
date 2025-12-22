@@ -27,6 +27,29 @@ class RidehailSystem:
         self.num_riders = num_riders
         self.disturbance = disturbance
         
+        # Simulation config
+        self.sim_duration = 60  # seconds (1 sec = 1 min, total = 1 hour)
+        self.request_probability = 0.67  # 67% chance per second
+        self.batch_interval = 5  # seconds
+        
+        # Geographic config
+        self.ride_radius = 10  # miles
+        self.speed_highway = 60  # mph
+        self.speed_city = 20  # mph
+        self.dropoff_pickup_time = 2  # minutes
+        
+        # Lognormal distribution params
+        self.dist_mean = 4.5  # miles
+        self.dist_iqr = (1.25, 6)  # miles
+        self.dist_max = 20  # miles
+        self.dist_min=0.25 #miles
+        
+        # Pricing constants
+        self.base_fare = 7.50
+        self.rate_per_mile = 1.70
+        self.rate_per_min = 0.35
+        self.ops_cost_per_mile = 0.40
+        
         # Variables
         self.count = None
         self.time = None
@@ -37,4 +60,3 @@ class RidehailSystem:
         # State
         self.vehicles = []
         self.requests = []
-
