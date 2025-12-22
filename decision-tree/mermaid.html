@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid Decision Tree</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        
+        // Make mermaid available globally
+        window.mermaid = mermaid;
+        
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#000000',
+                primaryBorderColor: '#000000',
+                lineColor: '#000000',
+                secondaryColor: '#f5f5f5',
+                tertiaryColor: '#e0e0e0',
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                secondBkg: '#f5f5f5',
+                tertiaryBkg: '#e0e0e0',
+                nodeBorder: '#000000',
+                clusterBkg: '#ffffff',
+                clusterBorder: '#000000',
+                titleColor: '#000000',
+                edgeLabelBackground: '#ffffff',
+                nodeTextColor: '#000000'
+            },
+            flowchart: {
+                curve: 'linear',
+                padding: 20,
+                nodeSpacing: 50,
+                rankSpacing: 80,
+                htmlLabels: true,
+                wrap: true,
+                width: 200
+            }
+        });
+        
+        // Only render the first (visible) tab's diagram on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const firstTab = document.querySelector('.tab-content.active .mermaid');
+            if (firstTab) {
+                mermaid.run({ nodes: [firstTab] });
+            }
+        });
+    </script>
+    <script>
+        async function switchTab(index) {
+            const contents = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-button');
+            
+            contents.forEach(content => content.classList.remove('active'));
+            buttons.forEach(button => button.classList.remove('active'));
+            
+            contents[index].classList.add('active');
+            buttons[index].classList.add('active');
+            
+            // Render Mermaid diagrams in the newly visible tab
+            const mermaidDivs = contents[index].querySelectorAll('.mermaid');
+            for (const div of mermaidDivs) {
+                if (!div.getAttribute('data-processed')) {
+                    await window.mermaid.run({ nodes: [div] });
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 40px;
+        }
+        h1 {
+            text-align: center;
+            color: #000000;
+            font-weight: normal;
+            font-size: 24px;
+            margin-bottom: 40px;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        /* Tab styling */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ccc;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            background: #f5f5f5;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            cursor: pointer;
+            font-family: 'Times New Roman', serif;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        .tab-button:hover {
+            background: #e0e0e0;
+        }
+        .tab-button.active {
+            background: #ffffff;
+            border-bottom: 2px solid #ffffff;
+            margin-bottom: -2px;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Pedagogy questions - lighter sage green with dashed border */
+        g[id*="flowchart-PQ"] rect,
+        g[id*="flowchart-PQ"] polygon,
+        g[id*="flowchart-PQ"] circle {
+            fill: #d4e8d4 !important;
+            stroke: #8fbc8f !important;
+            stroke-width: 2px !important;
+            stroke-dasharray: 5,5 !important;
+        }
+        g[id*="flowchart-PQ"] .nodeLabel,
+        g[id*="flowchart-PQ"] span {
+            color: #3d6b3d !important;
+            fill: #3d6b3d !important;
+            font-style: italic !important;
+        }
+        g.edgePath[id*="-PQ"] path.path,
+        g.edgePath[id*="PQ-"] path.path {
+            stroke: #8fbc8f !important;
+            stroke-width: 2px !important;
+            stroke-dasharray: 5,5 !important;
+        }
+        
+        /* Pedagogy answers - medium sage green with dashed border */
+        g[id*="flowchart-PA"] rect,
+        g[id*="flowchart-PA"] polygon,
+        g[id*="flowchart-PA"] circle {
+            fill: #a8c8a8 !important;
+            stroke: #6b8e6b !important;
+            stroke-width: 2px !important;
+            stroke-dasharray: 5,5 !important;
+        }
+        g[id*="flowchart-PA"] .nodeLabel,
+        g[id*="flowchart-PA"] span {
+            color: #2d5a2d !important;
+            fill: #2d5a2d !important;
+            font-style: italic !important;
+        }
+        g.edgePath[id*="-PA"] path.path,
+        g.edgePath[id*="PA-"] path.path {
+            stroke: #6b8e6b !important;
+            stroke-width: 2px !important;
+            stroke-dasharray: 5,5 !important;
+        }
+        
+        /* Pedagogical comments - red with dashed border */
+        g[id*="flowchart-PC"] rect,
+        g[id*="flowchart-PC"] polygon,
+        g[id*="flowchart-PC"] circle {
+            fill: #ffcccc !important;
+            stroke: #cc0000 !important;
+            stroke-width: 2px !important;
+            stroke-dasharray: 5,5 !important;
+        }
+        g[id*="flowchart-PC"] .nodeLabel,
+        g[id*="flowchart-PC"] span {
+            color: #8b0000 !important;
+            fill: #8b0000 !important;
+            font-style: italic !important;
+            font-family: 'Courier New', monospace !important;
+        }
+        g.edgePath[id*="-PC"] path.path,
+        g.edgePath[id*="PC-"] path.path {
+            stroke: #cc0000 !important;
+            stroke-width: 2px !important;
+            stroke-dasharray: 5,5 !important;
+        }
+        
+        /* Generic comments - light blue with dashed border */
+        g[id*="flowchart-C"] rect,
+        g[id*="flowchart-C"] polygon,
+        g[id*="flowchart-C"] circle {
+            fill: #d4e8f5 !important;
+            stroke: #6ba3cc !important;
+            stroke-width: 2px !important;
+            stroke-dasharray: 5,5 !important;
+        }
+        g[id*="flowchart-C"] .nodeLabel,
+        g[id*="flowchart-C"] span {
+            color: #2d5a7a !important;
+            fill: #2d5a7a !important;
+            font-style: italic !important;
+        }
+        g.edgePath[id*="-C"] path.path,
+        g.edgePath[id*="C-"] path.path {
+            stroke: #6ba3cc !important;
+            stroke-width: 2px !important;
+            stroke-dasharray: 5,5 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Decision Tree Visualization</h1>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab(0)">Example</button>
+            <button class="tab-button" onclick="switchTab(1)">Implementation</button>
+            <button class="tab-button" onclick="switchTab(2)">Student example</button>
+        </div>
+        
+        <div class="tab-content active">
+            <div class="mermaid">
+                graph TD
+                Start[Begin Example] --> A1[Initialize FIFO Matching where drivers cannot stop offering rides.]
+                A1-->C1["Features: Location, Time, Wait Time, Queue Length, Driver Review, Rider Review, Rider Cancellation Rate, Driver Cancellation Rate, Fare, Fare Variance<br/>Maximize: Profit, Driver Rating, Rider Rating<br/>Minimize: Wait Time, Cancellations"]
+                C1 --> D1{Toggle driver:rider ratio}
+                D1 -->|driver>rider| PQ[What will happen at this point?]
+                PQ --> PA[There will be a surplus of drivers]
+                PA --> PC1[Correct student=true]
+                D1 -->|rider>driver| PQ2[What will happen at this point?]
+                PQ2 --> PA2[There might be a shortage of drivers, but it depends on the ratio.<br/>Since drivers are being recycled back into the pool,<br/>the result will actually be longer wait times<br/>as opposed to a shortage of drivers.]
+                PA2 --> PC2[Correct student=true]
+                D1 -->|driver=rider| PQ3[What will happen at this point?]
+                PQ3 --> PA3[There will still be a surplus of drivers.]
+                PA3 --> PC3[Correct student=true]
+                A2["Surplus"]
+                PC1 --> A2
+                PC2 --> A2
+                PC3 --> A2
+                A3["Shortage"]
+                PC2 --> A3
+                A2-->C2["At this point, the student may conclude that the system is working as expected, <br/>and that our FIFO system is working. <br/>However, at this point, we will congradulate the student on <br/>choosing a situation that results in a surplus, but then ask them to <br/>choose a situation that will (by design) break our system."]
+                A3-->C3["Good time to introduce idea of making logic more complicated <br/>to account for edge case situations like this."]
+                C4["Example: Different scenarios impact the system in different ways."]
+                C3-->C4
+                C2-->C4
+                C4-->End[End Example]
+            </div>
+        </div>
+        
+        <div class="tab-content">
+            <div class="mermaid">
+                graph TD
+                Start2[Initialize Student1]
+                Start2-->C1["Initialize testing environment with feature display and interactions.<br/>This will use an LLM because tests will be high-level and be expressed in natural language.<br/>Student will be able to use natural language to define the location, rating of drivers, etc.<br/>From this point on, all of the multiple choice questions and tests will be written in real time by the LLM.<br/>Since the low-level testing will be easier, that'll be all pre-written MCQs."]
+            </div>
+        </div>
+        
+        <div class="tab-content">
+            <div class="mermaid">
+                graph TD
+                Start3[Begin example implementation]
+                A1="Read student pseudocode"
+                
+            </div>
+        </div>
+        
+        <div style="margin-top: 40px; padding: 20px; border-top: 1px solid #ccc;">
+            <h2 style="font-size: 18px; margin-bottom: 15px;">Key</h2>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; max-width: 800px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 60px; height: 40px; border: 2px solid #000; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px;">A</div>
+                    <span>Action</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 60px; height: 60px; border: 2px solid #000; background: #fff; transform: rotate(45deg); display: flex; align-items: center; justify-content: center;"><span style="transform: rotate(-45deg); font-size: 11px;">D</span></div>
+                    <span>Decision</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 60px; height: 40px; border: 2px dashed #8fbc8f; background: #d4e8d4; display: flex; align-items: center; justify-content: center; font-size: 11px; font-style: italic; color: #3d6b3d;">PQ</div>
+                    <span>Pedagogy Question</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 60px; height: 40px; border: 2px dashed #6b8e6b; background: #a8c8a8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-style: italic; color: #2d5a2d;">PA</div>
+                    <span>Pedagogy Answer</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 60px; height: 40px; border: 2px dashed #cc0000; background: #ffcccc; display: flex; align-items: center; justify-content: center; font-size: 11px; font-style: italic; color: #8b0000; font-family: 'Courier New', monospace;">PC</div>
+                    <span>Pedagogical Comment</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 60px; height: 40px; border: 2px dashed #6ba3cc; background: #d4e8f5; display: flex; align-items: center; justify-content: center; font-size: 11px; font-style: italic; color: #2d5a7a;">C</div>
+                    <span>Generic Comment</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
