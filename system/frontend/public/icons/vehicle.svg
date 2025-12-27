@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Top of car -->
+  <path d="M 45 55 L 55 40 L 95 40 L 105 55"/>
+  <!-- Main body -->
+  <path d="M 30 55 L 25 65 L 25 95 L 30 105 L 30 115 L 45 115 L 45 105 L 105 105 L 105 115 L 120 115 L 120 105 L 125 95 L 125 65 L 120 55 Z"/>
+  <!-- Windshield -->
+  <line x1="45" y1="55" x2="105" y2="55"/>
+  <!-- Side mirrors -->
+  <circle cx="20" cy="70" r="5"/>
+  <circle cx="130" cy="70" r="5"/>
+  <!-- Headlights -->
+  <ellipse cx="35" cy="85" rx="10" ry="8"/>
+  <ellipse cx="115" cy="85" rx="10" ry="8"/>
+  <!-- Grille -->
+  <rect x="55" y="95" width="40" height="15" rx="5"/>
+</svg>
+
