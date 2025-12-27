@@ -13,7 +13,7 @@ class SimulationConfig:
     Configuration object that defines how the simulation should run
     """
     def __init__(self, frontend_selections):
-        self.algorithm_type = "batch"  # or "greedy"
+        self.algorithm_type = "batch"
         self.bug_injection_points = []
         self.test_attributes = []
         self.entity_targets = []  # which entities to test (rider_1, vehicle_2, system)

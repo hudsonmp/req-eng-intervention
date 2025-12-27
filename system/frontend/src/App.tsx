@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import 'katex/dist/katex.min.css';
 
 interface UserDropdown {
   id: number;
@@ -13,6 +14,17 @@ function App() {
   ]);
   const [showTooltip, setShowTooltip] = useState(false);
   const [selectedInteraction, setSelectedInteraction] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [instructionsContent, setInstructionsContent] = useState('');
+
+  useEffect(() => {
+    // Load instructions.tex file
+    fetch('/instructions.tex')
+      .then(response => response.text())
+      .then(text => setInstructionsContent(text))
+      .catch(err => console.error('Failed to load instructions:', err));
+  }, []);
 
   const handleAddDropdown = () => {
     if (dropdowns.length < 3) {
@@ -28,16 +40,111 @@ function App() {
     setDropdowns(dropdowns.map(dropdown => 
       dropdown.id === id ? { ...dropdown, selectedOption: value } : dropdown
     ));
+    setErrorMessage(''); // Clear error when selection changes
   };
 
   const handleCustomTextChange = (id: number, value: string) => {
     setDropdowns(dropdowns.map(dropdown => 
       dropdown.id === id ? { ...dropdown, customText: value } : dropdown
     ));
+    setErrorMessage(''); // Clear error when selection changes
   };
 
   const completeUsers = dropdowns.filter(d => d.selectedOption && d.customText).length;
   const isButtonEnabled = completeUsers >= 2;
+
+  const handleBeginHelping = () => {
+    // Get all complete dropdowns (both category and attribute selected)
+    const completeDropdowns = dropdowns.filter(d => d.selectedOption && d.customText);
+    
+    // Extract unique categories
+    const uniqueCategories = new Set(completeDropdowns.map(d => d.selectedOption));
+    
+    // Check if there are at least 2 distinct categories
+    if (uniqueCategories.size < 2) {
+      setErrorMessage("You must select two or more distinct categories");
+      return;
+    }
+    
+    // Clear error and proceed
+    setErrorMessage('');
+    // TODO: Add logic to proceed with simulation
+    console.log('Proceeding with simulation', completeDropdowns);
+  };
+
+  const parseInlineFormatting = (text: string): JSX.Element[] => {
+    // Split on both **bold** and `code`
+    const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      } else if (part.startsWith('`') && part.endsWith('`')) {
+        return <code key={i} style={{ 
+          fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+          backgroundColor: '#f4f4f4',
+          padding: '2px 4px',
+          fontSize: '13px',
+          borderRadius: '3px'
+        }}>{part.slice(1, -1)}</code>;
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
+  const renderFormattedText = (text: string) => {
+    const lines = text.split('\n');
+    const elements: JSX.Element[] = [];
+    let inList = false;
+    
+    lines.forEach((line, index) => {
+      if (line.trim() === '') {
+        if (inList) {
+          inList = false;
+        }
+        return;
+      }
+      
+      // Handle # headers (h2)
+      if (line.startsWith('# ')) {
+        elements.push(
+          <h2 key={index} style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '15px', marginBottom: '10px' }}>
+            {line.substring(2)}
+          </h2>
+        );
+      }
+      // Handle ## headers (h3)
+      else if (line.startsWith('## ')) {
+        elements.push(
+          <h3 key={index} style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '12px', marginBottom: '8px' }}>
+            {line.substring(3)}
+          </h3>
+        );
+      }
+      // Handle numbered lists
+      else if (line.match(/^\d+\.\s/)) {
+        if (!inList) {
+          inList = true;
+        }
+        const content = line.replace(/^\d+\.\s/, '');
+        elements.push(
+          <div key={index} style={{ marginLeft: '20px', marginBottom: '8px' }}>
+            <span style={{ marginRight: '8px' }}>{line.match(/^\d+/)?.[0]}.</span>
+            {parseInlineFormatting(content)}
+          </div>
+        );
+      }
+      // Handle paragraphs
+      else {
+        elements.push(
+          <p key={index} style={{ marginBottom: '10px', lineHeight: '1.6' }}>
+            {parseInlineFormatting(line)}
+          </p>
+        );
+      }
+    });
+    
+    return elements;
+  };
 
   return (
     <div className="app">
@@ -66,6 +173,23 @@ function App() {
                 }}
               />
             ))}
+          </div>
+          <div style={{ marginTop: '8px' }}>
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowInstructions(true);
+              }}
+              style={{
+                fontSize: '11px',
+                color: '#007bff',
+                textDecoration: 'underline',
+                cursor: 'pointer'
+              }}
+            >
+              Student Instructions
+            </a>
           </div>
         </div>
       </div>
@@ -225,6 +349,7 @@ function App() {
           >
             <button
               disabled={!isButtonEnabled}
+              onClick={handleBeginHelping}
               style={{
                 padding: '10px 20px',
                 fontSize: '14px',
@@ -270,6 +395,19 @@ function App() {
               </div>
             )}
           </div>
+          
+          {errorMessage && (
+            <div style={{
+              marginTop: '10px',
+              padding: '8px 12px',
+              backgroundColor: '#fee',
+              color: '#c00',
+              fontSize: '13px',
+              border: '1px solid #fcc'
+            }}>
+              {errorMessage}
+            </div>
+          )}
         </div>
       </div>
       <div className="container container-3">
@@ -292,6 +430,57 @@ function App() {
           <option value="interaction_3">3</option>
         </select>
       </div>
+      
+      {showInstructions && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000
+          }}
+          onClick={() => setShowInstructions(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: '30px',
+              maxWidth: '700px',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              border: '1px solid #ccc',
+              position: 'relative',
+              fontFamily: '"Times New Roman", Times, serif'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowInstructions(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                border: 'none',
+                background: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+            >
+              ×
+            </button>
+            <div style={{ fontSize: '14px' }}>
+              {renderFormattedText(instructionsContent)}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
