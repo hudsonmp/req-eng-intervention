@@ -17,6 +17,31 @@ function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [showInstructions, setShowInstructions] = useState(false);
   const [instructionsContent, setInstructionsContent] = useState('');
+  const [editableValues, setEditableValues] = useState({
+    r1_request: 'T+0 min',
+    r1_pickup: '(14, 12)',
+    r2_request: 'T+0 min',
+    r2_pickup: '(15, 15)',
+    r2_destination: '(14, 12) = R1 pickup',
+    car_location: '(5, 4)',
+    car_assigned: 'Assigned to R1'
+  });
+  const [testOutput, setTestOutput] = useState('The output made sense in this case. rider_1 was assigned the car first because it was in batch one and is closer to the car, satisfying our program constraints.');
+  const [studentMessage, setStudentMessage] = useState('Hi! I think my code is correct, am I considering all edge cases? I tested it with:\n  • rider_1: request_time = T+0, pickup_location = (14, 12)\n  • rider_2: request_time = T+7, pickup_location = (15,15)\n  • car_1: car_cur_location = (5, 4)  • batch_time=5_mins');
+  const [testCaseA, setTestCaseA] = useState('A) "Try testing with rider_1 and rider_2 requesting at the exact same time"');
+  const [testCaseB, setTestCaseB] = useState('B) "You haven\'t considered the possibility of rider_2 cancelling the ride and the broader effect on the system."');
+  const [testCaseC, setTestCaseC] = useState('C) "Although this passed, you haven\'t tested when both riders submit a request in the same batch and aren\'t at the same location."');
+  
+  interface TestCase {
+    id: number;
+    category: string;
+    attribute: string;
+    value: string;
+  }
+  
+  const [testCases, setTestCases] = useState<TestCase[]>([
+    { id: 1, category: 'rider_1', attribute: 'request_time', value: 'T+0' }
+  ]);
 
   useEffect(() => {
     // Load instructions.tex file
@@ -25,6 +50,27 @@ function App() {
       .then(text => setInstructionsContent(text))
       .catch(err => console.error('Failed to load instructions:', err));
   }, []);
+
+  const handleValueChange = (key: string, value: string) => {
+    setEditableValues(prev => ({ ...prev, [key]: value }));
+  };
+
+  const parseCoordinates = (coordString: string): { x: number, y: number } => {
+    const match = coordString.match(/\((\d+),\s*(\d+)\)/);
+    if (match) {
+      return { x: parseInt(match[1]), y: parseInt(match[2]) };
+    }
+    return { x: 10, y: 10 }; // default
+  };
+
+  const getIconPosition = (coordString: string) => {
+    const coords = parseCoordinates(coordString);
+    // Each grid cell is 15px, so multiply by 15
+    return {
+      left: `${coords.x * 15}px`,
+      top: `${coords.y * 15}px`
+    };
+  };
 
   const handleAddDropdown = () => {
     if (dropdowns.length < 3) {
@@ -159,7 +205,8 @@ function App() {
             gridTemplateRows: 'repeat(20, 1fr)',
             gap: '0px',
             width: 'fit-content',
-            backgroundColor: '#f9f9f9'
+            backgroundColor: '#f9f9f9',
+            position: 'relative'
           }}>
             {Array.from({ length: 400 }, (_, i) => (
               <div 
@@ -173,7 +220,192 @@ function App() {
                 }}
               />
             ))}
+            {/* Car icon with label */}
+            <img 
+              src="/icons/vehicle.svg" 
+              alt="car" 
+              style={{ 
+                position: 'absolute',
+                width: '20px',
+                height: '20px',
+                ...getIconPosition(editableValues.car_location),
+                filter: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
+              }} 
+            />
+            <div style={{
+              position: 'absolute',
+              top: `calc(${getIconPosition(editableValues.car_location).top} + 22px)`,
+              left: `calc(${getIconPosition(editableValues.car_location).left} - 5px)`,
+              fontSize: '10px',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              padding: '2px 4px',
+              border: '1px solid #ccc',
+              whiteSpace: 'nowrap'
+            }}>
+              Car: {editableValues.car_location}
+            </div>
+            
+            {/* Rider 1 icon with label */}
+            <img 
+              src="/icons/rider.svg" 
+              alt="rider1" 
+              style={{ 
+                position: 'absolute',
+                width: '20px',
+                height: '20px',
+                ...getIconPosition(editableValues.r1_pickup),
+                filter: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
+              }} 
+            />
+            <div style={{
+              position: 'absolute',
+              top: `calc(${getIconPosition(editableValues.r1_pickup).top} + 22px)`,
+              left: `calc(${getIconPosition(editableValues.r1_pickup).left} - 10px)`,
+              fontSize: '10px',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              padding: '2px 4px',
+              border: '1px solid #0066cc',
+              whiteSpace: 'nowrap'
+            }}>
+              R1: {editableValues.r1_pickup}<br/>{editableValues.r1_request}
+            </div>
+            
+            {/* Rider 2 icon with label */}
+            <img 
+              src="/icons/rider.svg" 
+              alt="rider2" 
+              style={{ 
+                position: 'absolute',
+                width: '20px',
+                height: '20px',
+                ...getIconPosition(editableValues.r2_pickup),
+                filter: 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)'
+              }} 
+            />
+            <div style={{
+              position: 'absolute',
+              top: `calc(${getIconPosition(editableValues.r2_pickup).top} + 22px)`,
+              left: `calc(${getIconPosition(editableValues.r2_pickup).left} - 10px)`,
+              fontSize: '10px',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              padding: '2px 4px',
+              border: '1px solid #cc0000',
+              whiteSpace: 'nowrap'
+            }}>
+              R2: {editableValues.r2_pickup}<br/>{editableValues.r2_request}
+            </div>
           </div>
+          
+          {/* Test Values Table */}
+          <div style={{ marginTop: '15px', fontSize: '12px' }}>
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#000000' }}>Test Student's Code</h4>
+            <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#666', fontStyle: 'italic' }}>
+              Modify the values below to test different scenarios
+            </p>
+            <table style={{ 
+              width: '100%', 
+              borderCollapse: 'collapse',
+              border: '1px solid #ccc'
+            }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f0f0f0' }}>
+                  <th style={{ border: '1px solid #ccc', padding: '4px 6px', textAlign: 'left' }}>Entity</th>
+                  <th style={{ border: '1px solid #ccc', padding: '4px 6px', textAlign: 'left' }}>Attribute</th>
+                  <th style={{ border: '1px solid #ccc', padding: '4px 6px', textAlign: 'left' }}>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>Rider 1</td>
+                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>request_time</td>
+                  <td style={{ border: '1px solid #ccc', padding: '2px' }}>
+                    <select 
+                      value={editableValues.r1_request}
+                      onChange={(e) => handleValueChange('r1_request', e.target.value)}
+                      style={{ width: '100%', border: 'none', padding: '2px 4px', fontSize: '12px' }}
+                    >
+                      <option value="T+0 min">T+0 min</option>
+                      <option value="T+1 min">T+1 min</option>
+                      <option value="T+2 min">T+2 min</option>
+                      <option value="T+3 min">T+3 min</option>
+                      <option value="T+5 min">T+5 min</option>
+                      <option value="T+10 min">T+10 min</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>Rider 1</td>
+                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>pickup_location</td>
+                  <td style={{ border: '1px solid #ccc', padding: '2px' }}>
+                    <select 
+                      value={editableValues.r1_pickup}
+                      onChange={(e) => handleValueChange('r1_pickup', e.target.value)}
+                      style={{ width: '100%', border: 'none', padding: '2px 4px', fontSize: '12px' }}
+                    >
+                      <option value="(5, 5)">(5, 5)</option>
+                      <option value="(10, 10)">(10, 10)</option>
+                      <option value="(14, 12)">(14, 12)</option>
+                      <option value="(15, 15)">(15, 15)</option>
+                      <option value="(18, 18)">(18, 18)</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>Rider 2</td>
+                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>request_time</td>
+                  <td style={{ border: '1px solid #ccc', padding: '2px' }}>
+                    <select 
+                      value={editableValues.r2_request}
+                      onChange={(e) => handleValueChange('r2_request', e.target.value)}
+                      style={{ width: '100%', border: 'none', padding: '2px 4px', fontSize: '12px' }}
+                    >
+                      <option value="T+0 min">T+0 min</option>
+                      <option value="T+1 min">T+1 min</option>
+                      <option value="T+2 min">T+2 min</option>
+                      <option value="T+3 min">T+3 min</option>
+                      <option value="T+5 min">T+5 min</option>
+                      <option value="T+10 min">T+10 min</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>Rider 2</td>
+                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>pickup_location</td>
+                  <td style={{ border: '1px solid #ccc', padding: '2px' }}>
+                    <select 
+                      value={editableValues.r2_pickup}
+                      onChange={(e) => handleValueChange('r2_pickup', e.target.value)}
+                      style={{ width: '100%', border: 'none', padding: '2px 4px', fontSize: '12px' }}
+                    >
+                      <option value="(5, 5)">(5, 5)</option>
+                      <option value="On route (10, 8)">On route (10, 8)</option>
+                      <option value="(10, 10)">(10, 10)</option>
+                      <option value="(12, 12)">(12, 12)</option>
+                      <option value="(15, 15)">(15, 15)</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>Car 1</td>
+                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>car_cur_location</td>
+                  <td style={{ border: '1px solid #ccc', padding: '2px' }}>
+                    <select 
+                      value={editableValues.car_location}
+                      onChange={(e) => handleValueChange('car_location', e.target.value)}
+                      style={{ width: '100%', border: 'none', padding: '2px 4px', fontSize: '12px' }}
+                    >
+                      <option value="(0, 0)">(0, 0)</option>
+                      <option value="(5, 4)">(5, 4)</option>
+                      <option value="(8, 8)">(8, 8)</option>
+                      <option value="(10, 10)">(10, 10)</option>
+                      <option value="(15, 15)">(15, 15)</option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
           <div style={{ marginTop: '8px' }}>
             <a
               href="#"
@@ -191,83 +423,510 @@ function App() {
               Student Instructions
             </a>
           </div>
+
+          {/* Begin Simulation Button */}
+          <div style={{ marginTop: '20px' }}>
+            <button
+              style={{
+                width: '100%',
+                padding: '12px',
+                fontSize: '14px',
+                border: 'none',
+                backgroundColor: '#007bff',
+                color: 'white',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              Begin Simulation
+            </button>
+          </div>
         </div>
       </div>
       <div className="container container-2">
         <div style={{ padding: '10px 10px 10px 0' }}>
           <h3 style={{ marginTop: '0', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
-            Add Test User
+            Selected Attributes
           </h3>
           
-          {dropdowns.map((dropdown, index) => {
-            const getIconAndColor = (selection: string) => {
-              if (selection.startsWith('rider_1')) return { icon: '/icons/rider.svg', color: 'blue' };
-              if (selection.startsWith('rider_2')) return { icon: '/icons/rider.svg', color: 'red' };
-              if (selection.startsWith('vehicle_1')) return { icon: '/icons/vehicle.svg', color: 'blue' };
-              if (selection.startsWith('vehicle_2')) return { icon: '/icons/vehicle.svg', color: 'red' };
-              if (selection === 'system') return { icon: '/icons/system.svg', color: 'black' };
-              return null;
-            };
-            
-            const iconData = getIconAndColor(dropdown.selectedOption);
-            
-            return (
-            <div key={dropdown.id} style={{ marginBottom: '10px' }}>
+          {/* Mock selection 1: rider_1 request_time */}
+          <div style={{ marginBottom: '10px' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+              <img 
+                src="/icons/rider.svg" 
+                alt="icon" 
+                style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  filter: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
+                }} 
+              />
+              <div style={{ maxWidth: '200px' }}>
+                <div style={{ 
+                  padding: '4px 6px', 
+                  fontSize: '13px',
+                  border: '1px solid #ccc',
+                  backgroundColor: '#f0f0f0',
+                  color: '#000000'
+                }}>
+                  Rider 1
+                </div>
+                <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
+                    Attribute:
+                  </label>
+                  <div style={{
+                    flex: 1,
+                    padding: '4px 6px',
+                    fontSize: '13px',
+                    border: '1px solid #ccc',
+                    backgroundColor: '#f0f0f0',
+                    color: '#000000'
+                  }}>
+                    request_time
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mock selection 2: rider_1 pickup_location */}
+          <div style={{ marginBottom: '10px' }}>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
-                {iconData && (
                   <img 
-                    src={iconData.icon} 
+                src="/icons/rider.svg" 
                     alt="icon" 
                     style={{ 
                       width: '40px', 
                       height: '40px', 
+                  filter: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
+                    }} 
+                  />
+                <div style={{ maxWidth: '200px' }}>
+                <div style={{ 
+                      padding: '4px 6px', 
+                      fontSize: '13px',
+                      border: '1px solid #ccc',
+                  backgroundColor: '#f0f0f0',
+                      color: '#000000'
+                }}>
+                  Rider 1
+                </div>
+                    <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
+                        Attribute:
+                      </label>
+                  <div style={{
+                          flex: 1,
+                          padding: '4px 6px',
+                          fontSize: '13px',
+                          border: '1px solid #ccc',
+                    backgroundColor: '#f0f0f0',
+                          color: '#000000'
+                  }}>
+                    pickup_location
+                    </div>
+                </div>
+              </div>
+            </div>
+                </div>
+                
+          {/* Mock selection 3: rider_2 pickup_location */}
+          <div style={{ marginBottom: '10px' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+              <img 
+                src="/icons/rider.svg" 
+                alt="icon" 
+                    style={{
+                  width: '40px', 
+                  height: '40px', 
+                  filter: 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)'
+                }} 
+              />
+              <div style={{ maxWidth: '200px' }}>
+                <div style={{ 
+                  padding: '4px 6px', 
+                  fontSize: '13px',
+                  border: '1px solid #ccc',
+                  backgroundColor: '#f0f0f0',
+                  color: '#000000'
+                }}>
+                  Rider 2
+                </div>
+                <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
+                    Attribute:
+                  </label>
+                  <div style={{
+                    flex: 1,
+                    padding: '4px 6px',
+                    fontSize: '13px',
+                      border: '1px solid #ccc',
+                    backgroundColor: '#f0f0f0',
+                    color: '#000000'
+                  }}>
+                    pickup_location
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mock selection 4: rider_2 request_time */}
+          <div style={{ marginBottom: '10px' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+              <img 
+                src="/icons/rider.svg" 
+                alt="icon" 
+                style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  filter: 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)'
+                }} 
+              />
+              <div style={{ maxWidth: '200px' }}>
+                <div style={{ 
+                  padding: '4px 6px', 
+                  fontSize: '13px',
+                  border: '1px solid #ccc',
+                  backgroundColor: '#f0f0f0',
+                  color: '#000000'
+                }}>
+                  Rider 2
+                </div>
+                <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
+                    Attribute:
+                  </label>
+                  <div style={{
+                    flex: 1,
+                    padding: '4px 6px',
+                    fontSize: '13px',
+                    border: '1px solid #ccc',
+                    backgroundColor: '#f0f0f0',
+                    color: '#000000'
+                  }}>
+                    request_time
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mock selection 5: car_1 car_cur_location */}
+          <div style={{ marginBottom: '10px' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+              <img 
+                src="/icons/vehicle.svg" 
+                alt="icon" 
+                    style={{
+                  width: '40px', 
+                  height: '40px', 
+                  filter: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
+                }} 
+              />
+              <div style={{ maxWidth: '200px' }}>
+                <div style={{ 
+                  padding: '4px 6px', 
+                  fontSize: '13px',
+                  border: '1px solid #ccc',
+                  backgroundColor: '#f0f0f0',
+                  color: '#000000'
+                }}>
+                  Vehicle 1
+                </div>
+                <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
+                    Attribute:
+                  </label>
+                  <div style={{
+                    flex: 1,
+                    padding: '4px 6px',
+                    fontSize: '13px',
+                      border: '1px solid #ccc',
+                    backgroundColor: '#f0f0f0',
+                    color: '#000000'
+                  }}>
+                    car_cur_location
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3 style={{ marginTop: '20px', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
+            Student's Code Explanation
+          </h3>
+          
+          <div style={{
+            padding: '10px',
+            backgroundColor: '#f9f9f9',
+            border: '1px solid #ddd',
+            marginBottom: '15px',
+            fontSize: '12px',
+            lineHeight: '1.5',
+            fontStyle: 'italic'
+          }}>
+            "I wrote my rideshare assignment algorithm to check the request_time first and assign cars to riders in order. 
+            I used a priority queue sorted by request_time to make sure earlier requests get served first. 
+            Then I check pickup_location distances to break ties if two riders requested at the same time."
+          </div>
+
+          {/* Test Student Code Button */}
+            <button
+            disabled
+              style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '12px',
+              border: '1px solid #a8c5a0',
+              backgroundColor: '#c5d9be',
+              color: '#4a5f45',
+              cursor: 'not-allowed',
+                fontWeight: '500',
+              textAlign: 'center',
+              marginBottom: '10px'
+              }}
+            >
+            Test Student Code ✓
+            </button>
+
+          {/* Test Output */}
+              <div style={{
+            padding: '8px',
+            backgroundColor: '#f0f7ed',
+            border: '1px solid #a8c5a0',
+            fontSize: '11px',
+            lineHeight: '1.4',
+            color: '#2d3a2b',
+            marginBottom: '15px'
+          }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px', fontSize: '10px', color: '#4a5f45' }}>
+              Test Output:
+            </div>
+            <div
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => setTestOutput(e.currentTarget.textContent || '')}
+              style={{ outline: 'none' }}
+            >
+              {testOutput}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="container container-3" style={{ display: 'flex', flexDirection: 'column' }}>
+        {/* Student Profile */}
+                <div style={{
+          padding: '8px',
+          backgroundColor: '#f0f0f0',
+          borderBottom: '1px solid #ccc'
+        }}>
+          <h3 style={{ marginTop: '0', marginBottom: '4px', fontSize: '13px', color: '#000000' }}>
+            Student Profile
+          </h3>
+          <div style={{ fontSize: '11px', lineHeight: '1.3', color: '#333' }}>
+            <strong>Year:</strong> First-year | <strong>Course:</strong> CS 101<br/>
+            <strong>Background:</strong> Rideshare domain exp | <strong>Programming:</strong> Beginner
+          </div>
+          </div>
+          
+        {/* Chat Messages */}
+        <div style={{ 
+          flex: 1, 
+          padding: '10px',
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px'
+        }}>
+          {/* Student's message */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              backgroundColor: '#007bff',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              flexShrink: 0
+            }}>
+              S
+            </div>
+            <div style={{
+              flex: 1,
+              padding: '8px',
+              backgroundColor: '#f0f0f0',
+              border: '1px solid #ddd',
+              fontSize: '12px',
+              lineHeight: '1.4'
+            }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '4px', fontSize: '11px', color: '#666' }}>
+                Student • 2 min ago
+              </div>
+              <div
+                contentEditable
+                suppressContentEditableWarning
+                onBlur={(e) => setStudentMessage(e.currentTarget.textContent || '')}
+                style={{ 
+                  outline: 'none',
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                {studentMessage}
+              </div>
+        </div>
+      </div>
+
+          <div style={{ fontSize: '11px', color: '#666', fontWeight: 'bold', marginBottom: '8px' }}>
+            Select a response:
+          </div>
+
+          {/* Response Text Options */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '15px' }}>
+            <div
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => setTestCaseA(e.currentTarget.textContent || '')}
+              style={{
+                padding: '8px',
+                fontSize: '11px',
+                border: '1px solid #ccc',
+                backgroundColor: 'white',
+                color: '#000000',
+                cursor: 'pointer',
+                textAlign: 'left',
+                lineHeight: '1.3',
+                outline: 'none'
+              }}
+            >
+              {testCaseA}
+            </div>
+
+            <div
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => setTestCaseB(e.currentTarget.textContent || '')}
+              style={{
+                padding: '8px',
+                fontSize: '11px',
+                border: '1px solid #ccc',
+                backgroundColor: 'white',
+                color: '#000000',
+                cursor: 'pointer',
+                textAlign: 'left',
+                lineHeight: '1.3',
+                outline: 'none'
+              }}
+            >
+              {testCaseB}
+            </div>
+
+            <div
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => setTestCaseC(e.currentTarget.textContent || '')}
+              style={{
+                padding: '8px',
+                fontSize: '11px',
+                border: '1px solid #ccc',
+                backgroundColor: 'white',
+                color: '#000000',
+                cursor: 'pointer',
+                textAlign: 'left',
+                lineHeight: '1.3',
+                outline: 'none'
+              }}
+            >
+              {testCaseC}
+            </div>
+          </div>
+
+          <div style={{ fontSize: '11px', color: '#666', fontWeight: 'bold', marginBottom: '6px' }}>
+            Select test case:
+          </div>
+
+          {/* Test Case Items */}
+          {testCases.map((testCase) => {
+            const getIconAndColor = (category: string) => {
+              if (category.startsWith('rider_1')) return { icon: '/icons/rider.svg', color: 'blue' };
+              if (category.startsWith('rider_2')) return { icon: '/icons/rider.svg', color: 'red' };
+              if (category.startsWith('vehicle_1')) return { icon: '/icons/vehicle.svg', color: 'blue' };
+              if (category.startsWith('vehicle_2')) return { icon: '/icons/vehicle.svg', color: 'red' };
+              if (category === 'system') return { icon: '/icons/system.svg', color: 'black' };
+              return { icon: '/icons/rider.svg', color: 'blue' };
+            };
+            
+            const iconData = getIconAndColor(testCase.category);
+            const categoryLabel = testCase.category === 'rider_1' ? 'Rider 1' : 
+                                 testCase.category === 'rider_2' ? 'Rider 2' :
+                                 testCase.category === 'vehicle_1' ? 'Vehicle 1' :
+                                 testCase.category === 'vehicle_2' ? 'Vehicle 2' : 'System';
+            
+            return (
+              <div key={testCase.id} style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'flex-start' }}>
+                  <input 
+                    type="checkbox" 
+                    checked 
+                    onChange={() => setTestCases(testCases.filter(tc => tc.id !== testCase.id))}
+                    style={{ marginTop: '8px' }}
+                  />
+                  <img 
+                    src={iconData.icon} 
+                    alt="icon" 
+                    style={{ 
+                      width: '28px', 
+                      height: '28px', 
                       filter: iconData.color === 'blue' ? 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)' :
                               iconData.color === 'red' ? 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)' :
                               'none'
                     }} 
                   />
-                )}
-                <div style={{ maxWidth: '200px' }}>
-                  <select 
-                    value={dropdown.selectedOption}
-                    onChange={(e) => handleSelectChange(dropdown.id, e.target.value)}
-                    style={{ 
-                      width: '100%', 
-                      padding: '4px 6px', 
-                      fontSize: '13px',
-                      border: '1px solid #ccc',
-                      borderRadius: '0px',
-                      backgroundColor: 'white',
-                      color: '#000000'
-                    }}
-                  >
-                    <option value="">Select category</option>
-                    <option value="rider_1">Rider {}_1</option>
-                    <option value="rider_2">Rider {}_2</option>
-                    <option value="vehicle_1">Vehicle {}_1</option>
-                    <option value="vehicle_2">Vehicle {}_2</option>
-                    <option value="system">System</option>
-                  </select>
-                  
-                  {dropdown.selectedOption && (
-                    <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
-                        Attribute:
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <select
+                      value={testCase.category}
+                      onChange={(e) => setTestCases(testCases.map(tc => 
+                        tc.id === testCase.id ? { ...tc, category: e.target.value } : tc
+                      ))}
+                      style={{ 
+                        width: '100%',
+                        padding: '2px 4px', 
+                        fontSize: '10px',
+                        border: '1px solid #ccc',
+                        backgroundColor: '#f0f0f0',
+                        color: '#000000',
+                        marginBottom: '3px'
+                      }}
+                    >
+                      <option value="rider_1">Rider 1</option>
+                      <option value="rider_2">Rider 2</option>
+                      <option value="vehicle_1">Vehicle 1</option>
+                      <option value="vehicle_2">Vehicle 2</option>
+                      <option value="system">System</option>
+                    </select>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '3px' }}>
+                      <label style={{ fontSize: '9px', color: '#000000', whiteSpace: 'nowrap' }}>
+                        Attr:
                       </label>
                       <select
-                        value={dropdown.customText}
-                        onChange={(e) => handleCustomTextChange(dropdown.id, e.target.value)}
+                        value={testCase.attribute}
+                        onChange={(e) => setTestCases(testCases.map(tc => 
+                          tc.id === testCase.id ? { ...tc, attribute: e.target.value } : tc
+                        ))}
                         style={{
                           flex: 1,
-                          padding: '4px 6px',
-                          fontSize: '13px',
+                          padding: '2px 4px',
+                          fontSize: '9px',
                           border: '1px solid #ccc',
-                          borderRadius: '0px',
-                          backgroundColor: 'white',
+                          backgroundColor: '#f0f0f0',
                           color: '#000000'
                         }}
                       >
-                        <option value="">Select attribute</option>
                         <option value="pickup_location">pickup_location</option>
                         <option value="destination">destination</option>
                         <option value="fare">fare</option>
@@ -280,155 +939,60 @@ function App() {
                         <option value="assigned_other">assigned_other</option>
                         <option value="car_cur_location">car_cur_location</option>
                         <option value="battery_level">battery_level</option>
-                        <option value="distance_dropoff">distance_dropoff</option>
-                        <option value="predicted_profit">predicted_profit</option>
-                        <option value="num_vehicles">num_vehicles</option>
-                        <option value="num_riders">num_riders</option>
-                        <option value="traffic_delay">traffic_delay</option>
-                        <option value="service_radius">service_radius</option>
-                        <option value="online">online</option>
-                        <option value="cancels">cancels</option>
-                        <option value="batch">batch</option>
-                        <option value="occupied_assigned_after">occupied_assigned_after</option>
                       </select>
                     </div>
-                  )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <label style={{ fontSize: '9px', color: '#000000', whiteSpace: 'nowrap' }}>
+                        Val:
+                      </label>
+                      <input
+                        type="text"
+                        value={testCase.value}
+                        onChange={(e) => setTestCases(testCases.map(tc => 
+                          tc.id === testCase.id ? { ...tc, value: e.target.value } : tc
+                        ))}
+                        style={{
+                          flex: 1,
+                          padding: '2px 4px',
+                          fontSize: '9px',
+                          border: '1px solid #ccc',
+                          backgroundColor: 'white',
+                          color: '#000000'
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
-                
-                {index === dropdowns.length - 1 && dropdowns.length < 3 && dropdown.selectedOption && dropdown.customText && (
-                  <button
-                    onClick={handleAddDropdown}
-                    style={{
-                      width: '28px',
-                      height: '28px',
-                      fontSize: '16px',
-                      border: '1px solid #ccc',
-                      borderRadius: '0px',
-                      backgroundColor: 'white',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#000000',
-                      padding: '0'
-                    }}
-                  >
-                    +
-                  </button>
-                )}
-                {dropdowns.length > 1 && (
-                  <button
-                    onClick={() => setDropdowns(dropdowns.filter(d => d.id !== dropdown.id))}
-                    style={{
-                      width: '28px',
-                      height: '28px',
-                      fontSize: '16px',
-                      border: '1px solid #ccc',
-                      borderRadius: '0px',
-                      backgroundColor: 'white',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#000000',
-                      padding: '0'
-                    }}
-                  >
-                    −
-                  </button>
-                )}
               </div>
-            </div>
             );
           })}
-          
-          <div 
-            style={{ position: 'relative', display: 'inline-block', marginTop: '20px' }}
-            onMouseEnter={() => !isButtonEnabled && setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-          >
+
+          {/* Add New Test Case Button */}
+          {testCases.length < 5 && (
             <button
-              disabled={!isButtonEnabled}
-              onClick={handleBeginHelping}
+              onClick={() => {
+                const newId = testCases.length > 0 ? Math.max(...testCases.map(tc => tc.id)) + 1 : 1;
+                setTestCases([...testCases, { 
+                  id: newId, 
+                  category: 'rider_1', 
+                  attribute: 'request_time', 
+                  value: '' 
+                }]);
+              }}
               style={{
-                padding: '10px 20px',
-                fontSize: '14px',
-                border: 'none',
-                borderRadius: '0px',
-                backgroundColor: isButtonEnabled ? '#007bff' : '#cccccc',
-                color: 'white',
-                cursor: isButtonEnabled ? 'pointer' : 'not-allowed',
-                fontWeight: '500',
-                pointerEvents: isButtonEnabled ? 'auto' : 'none'
+                width: '100%',
+                padding: '6px',
+                fontSize: '10px',
+                border: '1px solid #ccc',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                color: '#000000'
               }}
             >
-              Begin Helping Students
+              + Add Test Case
             </button>
-            {showTooltip && !isButtonEnabled && (
-              <div style={{
-                position: 'absolute',
-                bottom: '100%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                marginBottom: '8px',
-                padding: '8px 12px',
-                backgroundColor: '#ffe8d1',
-                color: '#000000',
-                fontSize: '13px',
-                whiteSpace: 'nowrap',
-                borderRadius: '4px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                zIndex: 1000
-              }}>
-                Try selecting two categories and attributes
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: '0',
-                  height: '0',
-                  borderLeft: '6px solid transparent',
-                  borderRight: '6px solid transparent',
-                  borderTop: '6px solid #ffe8d1'
-                }}></div>
-              </div>
-            )}
-          </div>
-          
-          {errorMessage && (
-            <div style={{
-              marginTop: '10px',
-              padding: '8px 12px',
-              backgroundColor: '#fee',
-              color: '#c00',
-              fontSize: '13px',
-              border: '1px solid #fcc'
-            }}>
-              {errorMessage}
-            </div>
           )}
         </div>
-      </div>
-      <div className="container container-3">
-        <select
-          value={selectedInteraction}
-          onChange={(e) => setSelectedInteraction(e.target.value)}
-          style={{
-            width: '80px',
-            padding: '2px 4px',
-            fontSize: '11px',
-            border: '1px solid #ccc',
-            borderRadius: '0px',
-            backgroundColor: 'white',
-            color: '#000000'
-          }}
-        >
-          <option value="">-</option>
-          <option value="interaction_1">1</option>
-          <option value="interaction_2">2</option>
-          <option value="interaction_3">3</option>
-        </select>
       </div>
       
       {showInstructions && (

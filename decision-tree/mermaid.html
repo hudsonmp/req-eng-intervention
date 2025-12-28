@@ -33,12 +33,12 @@
             },
             flowchart: {
                 curve: 'linear',
-                padding: 20,
-                nodeSpacing: 50,
-                rankSpacing: 80,
+                padding: 5,
+                nodeSpacing: 20,
+                rankSpacing: 25,
                 htmlLabels: true,
                 wrap: true,
-                width: 200
+                width: 180
             }
         });
         
@@ -74,42 +74,43 @@
         body {
             font-family: 'Times New Roman', serif;
             margin: 0;
-            padding: 20px;
+            padding: 5px;
             background-color: #ffffff;
         }
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             background-color: #ffffff;
-            padding: 40px;
+            padding: 8px;
         }
         h1 {
             text-align: center;
             color: #000000;
             font-weight: normal;
-            font-size: 24px;
-            margin-bottom: 40px;
+            font-size: 18px;
+            margin-bottom: 8px;
         }
         .mermaid {
             text-align: center;
-            margin: 20px 0;
+            margin: 5px 0;
+            font-size: 11px;
         }
         
         /* Tab styling */
         .tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 5px;
+            margin-bottom: 5px;
             border-bottom: 2px solid #ccc;
         }
         .tab-button {
-            padding: 10px 20px;
+            padding: 6px 12px;
             background: #f5f5f5;
             border: 1px solid #ccc;
             border-bottom: none;
             cursor: pointer;
             font-family: 'Times New Roman', serif;
-            font-size: 16px;
+            font-size: 13px;
             transition: background 0.3s;
         }
         .tab-button:hover {
@@ -230,30 +231,23 @@
         <div class="tab-content active">
             <div class="mermaid">
                 graph TD
-                Start[Begin Example] --> A1[Initialize FIFO Matching where drivers cannot stop offering rides.]
+                A1[Initialize FIFO Matching where drivers cannot stop offering rides.]
                 A1-->C1["Features: Location, Time, Wait Time, Queue Length, Driver Review, Rider Review, Rider Cancellation Rate, Driver Cancellation Rate, Fare, Fare Variance<br/>Maximize: Profit, Driver Rating, Rider Rating<br/>Minimize: Wait Time, Cancellations"]
                 C1 --> D1{Toggle driver:rider ratio}
                 D1 -->|driver>rider| PQ[What will happen at this point?]
                 PQ --> PA[There will be a surplus of drivers]
-                PA --> PC1[Correct student=true]
+                PA --> A2["Surplus"]
                 D1 -->|rider>driver| PQ2[What will happen at this point?]
                 PQ2 --> PA2[There might be a shortage of drivers, but it depends on the ratio.<br/>Since drivers are being recycled back into the pool,<br/>the result will actually be longer wait times<br/>as opposed to a shortage of drivers.]
-                PA2 --> PC2[Correct student=true]
+                PA2 --> A2
+                PA2 --> A3["Shortage"]
                 D1 -->|driver=rider| PQ3[What will happen at this point?]
                 PQ3 --> PA3[There will still be a surplus of drivers.]
-                PA3 --> PC3[Correct student=true]
-                A2["Surplus"]
-                PC1 --> A2
-                PC2 --> A2
-                PC3 --> A2
-                A3["Shortage"]
-                PC2 --> A3
+                PA3 --> A2
                 A2-->C2["At this point, the student may conclude that the system is working as expected, <br/>and that our FIFO system is working. <br/>However, at this point, we will congradulate the student on <br/>choosing a situation that results in a surplus, but then ask them to <br/>choose a situation that will (by design) break our system."]
                 A3-->C3["Good time to introduce idea of making logic more complicated <br/>to account for edge case situations like this."]
-                C4["Example: Different scenarios impact the system in different ways."]
+                C2-->C4["Example: Different scenarios impact the system in different ways."]
                 C3-->C4
-                C2-->C4
-                C4-->End[End Example]
             </div>
         </div>
         
@@ -270,36 +264,36 @@
                 graph TD
                 Start3[Begin example implementation]
                 A1="Read student pseudocode"
-                
+
             </div>
         </div>
         
-        <div style="margin-top: 40px; padding: 20px; border-top: 1px solid #ccc;">
-            <h2 style="font-size: 18px; margin-bottom: 15px;">Key</h2>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; max-width: 800px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 60px; height: 40px; border: 2px solid #000; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px;">A</div>
+        <div style="margin-top: 10px; padding: 10px; border-top: 1px solid #ccc;">
+            <h2 style="font-size: 14px; margin-bottom: 8px;">Key</h2>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 900px; font-size: 12px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 40px; height: 25px; border: 1.5px solid #000; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 9px;">A</div>
                     <span>Action</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 60px; height: 60px; border: 2px solid #000; background: #fff; transform: rotate(45deg); display: flex; align-items: center; justify-content: center;"><span style="transform: rotate(-45deg); font-size: 11px;">D</span></div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 40px; height: 40px; border: 1.5px solid #000; background: #fff; transform: rotate(45deg); display: flex; align-items: center; justify-content: center;"><span style="transform: rotate(-45deg); font-size: 9px;">D</span></div>
                     <span>Decision</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 60px; height: 40px; border: 2px dashed #8fbc8f; background: #d4e8d4; display: flex; align-items: center; justify-content: center; font-size: 11px; font-style: italic; color: #3d6b3d;">PQ</div>
-                    <span>Pedagogy Question</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 40px; height: 25px; border: 1.5px dashed #8fbc8f; background: #d4e8d4; display: flex; align-items: center; justify-content: center; font-size: 9px; font-style: italic; color: #3d6b3d;">PQ</div>
+                    <span>Pedagogy Q</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 60px; height: 40px; border: 2px dashed #6b8e6b; background: #a8c8a8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-style: italic; color: #2d5a2d;">PA</div>
-                    <span>Pedagogy Answer</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 40px; height: 25px; border: 1.5px dashed #6b8e6b; background: #a8c8a8; display: flex; align-items: center; justify-content: center; font-size: 9px; font-style: italic; color: #2d5a2d;">PA</div>
+                    <span>Pedagogy A</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 60px; height: 40px; border: 2px dashed #cc0000; background: #ffcccc; display: flex; align-items: center; justify-content: center; font-size: 11px; font-style: italic; color: #8b0000; font-family: 'Courier New', monospace;">PC</div>
-                    <span>Pedagogical Comment</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 40px; height: 25px; border: 1.5px dashed #cc0000; background: #ffcccc; display: flex; align-items: center; justify-content: center; font-size: 9px; font-style: italic; color: #8b0000; font-family: 'Courier New', monospace;">PC</div>
+                    <span>Pedagogy C</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 60px; height: 40px; border: 2px dashed #6ba3cc; background: #d4e8f5; display: flex; align-items: center; justify-content: center; font-size: 11px; font-style: italic; color: #2d5a7a;">C</div>
-                    <span>Generic Comment</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 40px; height: 25px; border: 1.5px dashed #6ba3cc; background: #d4e8f5; display: flex; align-items: center; justify-content: center; font-size: 9px; font-style: italic; color: #2d5a7a;">C</div>
+                    <span>Comment</span>
                 </div>
             </div>
         </div>
