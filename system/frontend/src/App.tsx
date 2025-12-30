@@ -203,6 +203,7 @@ function App() {
             const getIconAndColor = (selection: string) => {
               if (selection.startsWith('rider_1')) return { icon: '/icons/rider.svg', color: 'blue' };
               if (selection.startsWith('rider_2')) return { icon: '/icons/rider.svg', color: 'red' };
+              if (selection.startsWith('rider_3')) return { icon: '/icons/rider.svg', color: 'green' };
               if (selection.startsWith('vehicle_1')) return { icon: '/icons/vehicle.svg', color: 'blue' };
               if (selection.startsWith('vehicle_2')) return { icon: '/icons/vehicle.svg', color: 'red' };
               if (selection === 'system') return { icon: '/icons/system.svg', color: 'black' };
@@ -223,6 +224,7 @@ function App() {
                       height: '40px', 
                       filter: iconData.color === 'blue' ? 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)' :
                               iconData.color === 'red' ? 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)' :
+                              iconData.color === 'green' ? 'invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%)' :
                               'none'
                     }} 
                   />
@@ -244,6 +246,7 @@ function App() {
                     <option value="">Select category</option>
                     <option value="rider_1">Rider {}_1</option>
                     <option value="rider_2">Rider {}_2</option>
+                    <option value="rider_3">Rider {}_3</option>
                     <option value="vehicle_1">Vehicle {}_1</option>
                     <option value="vehicle_2">Vehicle {}_2</option>
                     <option value="system">System</option>
@@ -451,8 +454,10 @@ function App() {
             style={{
               backgroundColor: 'white',
               padding: '30px',
-              maxWidth: '700px',
-              maxHeight: '80vh',
+              width: '90vw',
+              maxWidth: '1400px',
+              height: '85vh',
+              maxHeight: '700px',
               overflow: 'auto',
               border: '1px solid #ccc',
               position: 'relative',
