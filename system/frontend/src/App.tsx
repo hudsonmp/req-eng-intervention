@@ -40,37 +40,45 @@ function App() {
     stakeholder: string;
     attribute: string;
     value: string;
+    value2: string; // For assigned (rider selection) or end_early (coordinates)
     error: string;
   }
   
   const [interactionTests, setInteractionTests] = useState<InteractionTest[]>([
-    { id: 1, stakeholder: '', attribute: '', value: '', error: '' }
+    { id: 1, stakeholder: '', attribute: '', value: '', value2: '', error: '' }
   ]);
+  const [showDistanceTool, setShowDistanceTool] = useState(false);
+  const [distanceStakeholder1, setDistanceStakeholder1] = useState('');
+  const [distanceStakeholder2, setDistanceStakeholder2] = useState('');
+  const [distanceResult, setDistanceResult] = useState<number | null>(null);
   
   // Helper to check if attribute is a location type
   const isLocationAttribute = (attr: string) => 
-    ['pickup_location', 'destination', 'car_cur_location'].includes(attr);
+    ['pickup_location', 'destination', 'car_current_location', 'end_early'].includes(attr);
   
   // Helper to check if attribute is a time type
   const isTimeAttribute = (attr: string) => 
-    ['request_time', 'eta_car', 'eta_destination'].includes(attr);
+    ['request_time', 'eta_vehicle', 'eta_destination'].includes(attr);
+  
+  // Helper to check if attribute is binary
+  const isBinaryAttribute = (attr: string) => 
+    ['accessible', 'occupied', 'assigned', 'traffic_delay', 'cancels', 'change_destination', 'end_early'].includes(attr);
   
   // Validate value based on attribute type
   const validateValue = (attribute: string, value: string): string => {
     if (!value) return '';
     
-    if (isLocationAttribute(attribute)) {
+    if (isLocationAttribute(attribute) && attribute !== 'end_early') {
       const match = value.match(/^\d+\s*,\s*\d+$/);
-      if (!match) return 'Format: x, y (e.g., 5, 10)';
+      if (!match) return 'x,y';
     } else if (isTimeAttribute(attribute)) {
-      const match = value.match(/^\d+(\s*(min|mins|m))?$/i);
-      if (!match) return 'Format: number (e.g., 5 or 5 min)';
-    } else if (attribute === 'battery_level') {
       const match = value.match(/^\d+$/);
-      if (!match || parseInt(value) > 100) return 'Format: 0-100';
-    } else if (attribute === 'fare') {
-      const match = value.match(/^\d+(\.\d{1,2})?$/);
-      if (!match) return 'Format: amount (e.g., 15.50)';
+      if (!match) return 'number';
+    } else if (attribute === 'battery') {
+      const match = value.match(/^\d+$/);
+      if (!match || parseInt(value) > 100) return '0-100';
+    } else if (isBinaryAttribute(attribute) && attribute !== 'assigned' && attribute !== 'end_early') {
+      if (value !== 'true' && value !== 'false') return 'true/false';
     }
     return '';
   };
@@ -80,41 +88,115 @@ function App() {
     if (!value) return '';
     if (isLocationAttribute(attribute)) return `(${value})`;
     if (isTimeAttribute(attribute)) return `T+${value}`;
-    if (attribute === 'battery_level') return `${value}%`;
-    if (attribute === 'fare') return `$${value}`;
+    if (attribute === 'battery') return `${value}/100`;
     return value;
+  };
+  
+  // Calculate distance between two coordinates
+  const calculateDistance = () => {
+    const entity1 = interactionTests.find(t => 
+      t.stakeholder === distanceStakeholder1 && isLocationAttribute(t.attribute) && t.value && !t.error
+    );
+    const entity2 = interactionTests.find(t => 
+      t.stakeholder === distanceStakeholder2 && isLocationAttribute(t.attribute) && t.value && !t.error
+    );
+    
+    if (entity1 && entity2) {
+      const coords1 = entity1.value.split(',').map(n => parseInt(n.trim()));
+      const coords2 = entity2.value.split(',').map(n => parseInt(n.trim()));
+      const dist = Math.sqrt(Math.pow(coords2[0] - coords1[0], 2) + Math.pow(coords2[1] - coords1[1], 2));
+      setDistanceResult(Math.round(dist * 100) / 100);
+    } else {
+      setDistanceResult(null);
+    }
+  };
+  
+  // Get stakeholders that have coordinates
+  const getStakeholdersWithCoords = () => {
+    return [...new Set(interactionTests
+      .filter(t => t.stakeholder && isLocationAttribute(t.attribute) && t.value && !t.error)
+      .map(t => t.stakeholder))];
   };
   
   // Get stakeholders with location attributes for simulation display
   const getSimulationEntities = () => {
-    const entities: { type: string; stakeholder: string; location: string; callouts: string[] }[] = [];
+    const entities: { type: string; stakeholder: string; location: string; isDestination: boolean; callouts: string[] }[] = [];
     
     interactionTests.filter(t => t.stakeholder && t.attribute && t.value && !t.error).forEach(test => {
-      const existing = entities.find(e => e.stakeholder === test.stakeholder);
+      const isDestAttr = test.attribute === 'destination';
+      const isDestEta = test.attribute === 'eta_destination';
+      const isMainLocAttr = (test.attribute === 'pickup_location' || test.attribute === 'car_current_location');
       
-      if (isLocationAttribute(test.attribute)) {
-        if (existing) {
-          existing.location = test.value;
+      if (isDestAttr) {
+        // Destination location - create/update destination entity (lighter shade)
+        const existingDest = entities.find(e => e.stakeholder === test.stakeholder && e.isDestination);
+        if (existingDest) {
+          existingDest.location = test.value;
         } else {
           entities.push({
             type: test.stakeholder.startsWith('rider') ? 'rider' : 'vehicle',
             stakeholder: test.stakeholder,
             location: test.value,
+            isDestination: true,
             callouts: []
           });
         }
-      } else {
-        if (existing) {
-          existing.callouts.push(`${test.attribute}: ${getFormattedValue(test.attribute, test.value)}`);
+      } else if (isMainLocAttr) {
+        // Main location (pickup/current) - create/update main entity (darker shade)
+        const existingMain = entities.find(e => e.stakeholder === test.stakeholder && !e.isDestination);
+        if (existingMain) {
+          existingMain.location = test.value;
+        } else {
+          entities.push({
+            type: test.stakeholder.startsWith('rider') ? 'rider' : 'vehicle',
+            stakeholder: test.stakeholder,
+            location: test.value,
+            isDestination: false,
+            callouts: []
+          });
+        }
+      } else if (isDestEta) {
+        // eta_destination goes on destination entity
+        const existingDest = entities.find(e => e.stakeholder === test.stakeholder && e.isDestination);
+        const displayVal = `eta: ${getFormattedValue(test.attribute, test.value)}`;
+        if (existingDest) {
+          existingDest.callouts.push(displayVal);
         } else {
           entities.push({
             type: test.stakeholder.startsWith('rider') ? 'rider' : 'vehicle',
             stakeholder: test.stakeholder,
             location: '',
-            callouts: [`${test.attribute}: ${getFormattedValue(test.attribute, test.value)}`]
+            isDestination: true,
+            callouts: [displayVal]
+          });
+        }
+      } else {
+        // All other attributes go on main entity (darker)
+        const existingMain = entities.find(e => e.stakeholder === test.stakeholder && !e.isDestination);
+        const displayVal = test.attribute === 'assigned' && test.value === 'true' && test.value2 
+          ? `assigned: ${test.value2}`
+          : test.attribute === 'end_early' && test.value === 'true' && test.value2
+          ? `end_early: (${test.value2})`
+          : `${test.attribute}: ${getFormattedValue(test.attribute, test.value)}`;
+        
+        if (existingMain) {
+          existingMain.callouts.push(displayVal);
+        } else {
+          entities.push({
+            type: test.stakeholder.startsWith('rider') ? 'rider' : 'vehicle',
+            stakeholder: test.stakeholder,
+            location: '',
+            isDestination: false,
+            callouts: [displayVal]
           });
         }
       }
+    });
+    
+    // Sort so main entities come before destinations
+    entities.sort((a, b) => {
+      if (a.stakeholder !== b.stakeholder) return a.stakeholder.localeCompare(b.stakeholder);
+      return a.isDestination ? 1 : -1;
     });
     
     return entities;
@@ -298,33 +380,33 @@ function App() {
               />
             ))}
             {/* Dynamic entities from interaction tests */}
-            {getSimulationEntities().map((entity, idx) => {
-              const isRider1 = entity.stakeholder === 'rider_1';
-              const isRider2 = entity.stakeholder === 'rider_2';
-              const isVehicle1 = entity.stakeholder === 'vehicle_1';
-              const isVehicle2 = entity.stakeholder === 'vehicle_2';
-              
-              const color = (isRider1 || isVehicle1) ? 'blue' : 'red';
-              const borderColor = color === 'blue' ? '#0066cc' : '#cc0000';
-              const filter = color === 'blue' 
-                ? 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
-                : 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)';
+            {getSimulationEntities().filter(e => e.location).map((entity, idx) => {
+              const colorMap: Record<string, string> = {
+                'rider_1': 'blue', 'rider_2': 'red', 'rider_3': 'green',
+                'vehicle_1': 'blue', 'vehicle_2': 'red'
+              };
+              const color = colorMap[entity.stakeholder] || 'blue';
+              const borderColors: Record<string, string> = { blue: '#0066cc', red: '#cc0000', green: '#2e7d32' };
+              const filters: Record<string, string> = {
+                blue: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)',
+                red: 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)',
+                green: 'invert(30%) sepia(95%) saturate(1000%) hue-rotate(100deg) brightness(95%) contrast(105%)'
+              };
+              const borderColor = borderColors[color];
+              const filter = filters[color];
               
               const icon = entity.type === 'rider' ? '/icons/rider.svg' : '/icons/vehicle.svg';
-              const label = entity.stakeholder.replace('_', ' ').replace('rider', 'R').replace('vehicle', 'V').replace(' ', '');
+              const label = entity.stakeholder.replace('_', '').replace('rider', 'R').replace('vehicle', 'V');
+              const labelSuffix = entity.isDestination ? ' dest' : '';
               
-              // If no location, place at a default position based on stakeholder
-              const defaultPositions: Record<string, string> = {
-                'rider_1': '5, 5',
-                'rider_2': '15, 5',
-                'vehicle_1': '10, 15',
-                'vehicle_2': '10, 10'
-              };
-              const location = entity.location || defaultPositions[entity.stakeholder] || '10, 10';
-              const position = getIconPosition(`(${location})`);
+              const position = getIconPosition(`(${entity.location})`);
+              
+              // Lighter opacity for destination markers
+              const iconOpacity = entity.isDestination ? 0.4 : 1;
+              const labelOpacity = entity.isDestination ? 0.7 : 1;
               
               return (
-                <React.Fragment key={entity.stakeholder}>
+                <React.Fragment key={`${entity.stakeholder}-${entity.isDestination ? 'dest' : 'main'}`}>
                   <img 
                     src={icon} 
                     alt={entity.stakeholder} 
@@ -334,7 +416,7 @@ function App() {
                 height: '20px',
                       ...position,
                       filter,
-                      opacity: entity.location ? 1 : 0.5
+                      opacity: iconOpacity
               }} 
             />
             <div style={{
@@ -346,10 +428,11 @@ function App() {
               padding: '2px 4px',
                     border: `1px solid ${borderColor}`,
                     whiteSpace: 'nowrap',
-                    maxWidth: '80px'
+                    maxWidth: '80px',
+                    opacity: labelOpacity
                   }}>
-                    <div style={{ fontWeight: 'bold' }}>{label}</div>
-                    {entity.location && <div>({entity.location})</div>}
+                    <div style={{ fontWeight: 'bold' }}>{label}{labelSuffix}</div>
+                    <div>({entity.location})</div>
                     {entity.callouts.map((callout, i) => (
                       <div key={i} style={{ fontSize: '8px', color: '#666' }}>{callout}</div>
                     ))}
@@ -357,7 +440,7 @@ function App() {
                 </React.Fragment>
               );
             })}
-            {getSimulationEntities().length === 0 && (
+            {getSimulationEntities().filter(e => e.location).length === 0 && (
             <div style={{
               position: 'absolute',
                 top: '50%',
@@ -370,10 +453,65 @@ function App() {
                 Add interaction tests<br/>to see simulation
             </div>
             )}
+            </div>
+            
+          {/* Distance Measurement Tool */}
+          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <button
+              onClick={() => setShowDistanceTool(!showDistanceTool)}
+              style={{ 
+                padding: '4px 8px', 
+              fontSize: '10px',
+                border: '1px solid #ccc', 
+                backgroundColor: showDistanceTool ? '#e3f2fd' : 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              title="Measure distance between stakeholders"
+            >
+              📏 Measure
+            </button>
+            {showDistanceTool && (
+              <>
+                <select
+                  value={distanceStakeholder1}
+                  onChange={(e) => { setDistanceStakeholder1(e.target.value); setDistanceResult(null); }}
+                  style={{ padding: '2px', fontSize: '9px', border: '1px solid #ccc', width: '50px' }}
+                >
+                  <option value="">--</option>
+                  {getStakeholdersWithCoords().map(s => (
+                    <option key={s} value={s}>{s.replace('rider_', 'R').replace('vehicle_', 'V')}</option>
+                  ))}
+                </select>
+                <span style={{ fontSize: '9px' }}>↔</span>
+                <select
+                  value={distanceStakeholder2}
+                  onChange={(e) => { setDistanceStakeholder2(e.target.value); setDistanceResult(null); }}
+                  style={{ padding: '2px', fontSize: '9px', border: '1px solid #ccc', width: '50px' }}
+                >
+                  <option value="">--</option>
+                  {getStakeholdersWithCoords().filter(s => s !== distanceStakeholder1).map(s => (
+                    <option key={s} value={s}>{s.replace('rider_', 'R').replace('vehicle_', 'V')}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={calculateDistance}
+                  disabled={!distanceStakeholder1 || !distanceStakeholder2}
+                  style={{ padding: '2px 6px', fontSize: '9px', border: '1px solid #ccc', backgroundColor: '#f5f5f5', cursor: 'pointer' }}
+                >
+                  =
+                </button>
+                {distanceResult !== null && (
+                  <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#1976d2' }}>{distanceResult} units</span>
+                )}
+              </>
+            )}
           </div>
           
           {/* Input Fields Section */}
-          <div style={{ marginTop: '15px', marginRight: '20px' }}>
+          <div style={{ marginTop: '10px', marginRight: '20px' }}>
             <div style={{ padding: '10px', border: '1px solid #ccc', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
               <div style={{ marginBottom: '10px' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
@@ -462,184 +600,217 @@ function App() {
           </button>
           
           
-            <h3 style={{ marginTop: '0', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
+            <h3 style={{ marginTop: '0', marginBottom: '8px', fontSize: '13px', color: '#000000' }}>
             Select Interaction Test
             </h3>
             
-          {/* Interaction Test Items */}
+          {/* Interaction Test Items - Compact */}
           {interactionTests.map((test) => {
-            const getIconAndColor = (stakeholder: string) => {
-              if (stakeholder === 'rider_1') return { icon: '/icons/rider.svg', color: 'blue' };
-              if (stakeholder === 'rider_2') return { icon: '/icons/rider.svg', color: 'red' };
-              if (stakeholder === 'vehicle_1') return { icon: '/icons/vehicle.svg', color: 'blue' };
-              if (stakeholder === 'vehicle_2') return { icon: '/icons/vehicle.svg', color: 'red' };
-                return { icon: '/icons/rider.svg', color: 'blue' };
-              };
-              
-            const iconData = getIconAndColor(test.stakeholder);
-            
-            // Get placeholder and prefix based on attribute
-            const getValueInput = (attribute: string) => {
-              if (isLocationAttribute(attribute)) {
-                return { prefix: '(', suffix: ')', placeholder: 'x, y' };
-              } else if (isTimeAttribute(attribute)) {
-                return { prefix: 'T+', suffix: '', placeholder: '0' };
-              } else if (attribute === 'battery_level') {
-                return { prefix: '', suffix: '%', placeholder: '0-100' };
-              } else if (attribute === 'fare') {
-                return { prefix: '$', suffix: '', placeholder: '0.00' };
-              }
-              return { prefix: '', suffix: '', placeholder: 'value' };
+            const colorMap: Record<string, string> = {
+              'rider_1': 'blue', 'rider_2': 'red', 'rider_3': 'green',
+              'vehicle_1': 'blue', 'vehicle_2': 'red'
             };
+            const filterMap: Record<string, string> = {
+              blue: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)',
+              red: 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)',
+              green: 'invert(30%) sepia(95%) saturate(1000%) hue-rotate(100deg) brightness(95%) contrast(105%)'
+            };
+            const iconSrc = test.stakeholder?.startsWith('vehicle') ? '/icons/vehicle.svg' : '/icons/rider.svg';
+            const color = colorMap[test.stakeholder] || 'blue';
             
-            const valueInput = getValueInput(test.attribute);
+            const needsSecondValue = test.attribute === 'assigned' || test.attribute === 'end_early';
+            const isBinary = isBinaryAttribute(test.attribute);
+            const isCoord = isLocationAttribute(test.attribute) && test.attribute !== 'end_early';
+            const isTime = isTimeAttribute(test.attribute);
               
               return (
               <div key={test.id} style={{ 
-                  marginBottom: '10px',
-                  padding: '10px',
+                marginBottom: '4px',
+                padding: '6px',
                   backgroundColor: 'white',
-                border: test.error ? '1px solid #f44336' : '1px solid #e0e0e0'
-                }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <img 
-                      src={iconData.icon} 
-                      alt="icon" 
-                      style={{ 
-                      width: '32px', 
-                      height: '32px', 
-                      filter: iconData.color === 'blue' 
-                        ? 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
-                        : 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)',
-                      opacity: test.stakeholder ? 1 : 0.3
-                      }} 
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                border: test.error ? '1px solid #f44336' : '1px solid #e0e0e0',
+                borderRadius: '4px',
+                display: 'flex',
+                gap: '4px',
+                alignItems: 'center'
+              }}>
+                <img src={iconSrc} alt="" style={{ width: '20px', height: '20px', filter: filterMap[color], opacity: test.stakeholder ? 1 : 0.3 }} />
+                
                       <select
-                      value={test.stakeholder}
-                      onChange={(e) => setInteractionTests(interactionTests.map(t => 
-                        t.id === test.id ? { ...t, stakeholder: e.target.value, error: '' } : t
-                        ))}
-                        style={{ 
-                          width: '100%',
-                          padding: '4px 6px', 
-                        fontSize: '11px',
-                          border: '1px solid #ccc',
-                          backgroundColor: 'white',
-                          color: '#000000',
-                        marginBottom: '4px'
-                        }}
-                      >
-                      <option value="">Select Stakeholder</option>
-                        <option value="rider_1">Rider 1</option>
-                        <option value="rider_2">Rider 2</option>
-                        <option value="vehicle_1">Vehicle 1</option>
-                        <option value="vehicle_2">Vehicle 2</option>
+                  value={test.stakeholder}
+                  onChange={(e) => setInteractionTests(interactionTests.map(t => 
+                    t.id === test.id ? { ...t, stakeholder: e.target.value, error: '' } : t
+                  ))}
+                  style={{ width: '65px', padding: '2px', fontSize: '9px', border: '1px solid #ccc' }}
+                >
+                  <option value="">--</option>
+                  <option value="rider_1">R1</option>
+                  <option value="rider_2">R2</option>
+                  <option value="rider_3">R3</option>
+                  <option value="vehicle_1">V1</option>
+                  <option value="vehicle_2">V2</option>
                       </select>
-                    
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                        <label style={{ fontSize: '10px', color: '#666', whiteSpace: 'nowrap' }}>
-                          Attr:
-                        </label>
+                
                         <select
-                        value={test.attribute}
-                        onChange={(e) => setInteractionTests(interactionTests.map(t => 
-                          t.id === test.id ? { ...t, attribute: e.target.value, value: '', error: '' } : t
-                          ))}
-                          style={{
-                            flex: 1,
-                            padding: '4px 6px',
-                            fontSize: '10px',
-                            border: '1px solid #ccc',
-                            backgroundColor: 'white',
-                          color: '#000000'
-                          }}
-                        >
-                        <option value="">Select Attribute</option>
+                  value={test.attribute}
+                  onChange={(e) => setInteractionTests(interactionTests.map(t => 
+                    t.id === test.id ? { ...t, attribute: e.target.value, value: '', value2: '', error: '' } : t
+                  ))}
+                  style={{ width: '90px', padding: '2px', fontSize: '9px', border: '1px solid #ccc' }}
+                >
+                  <option value="">-- attr --</option>
+                  <optgroup label="Coordinates">
                           <option value="pickup_location">pickup_location</option>
                           <option value="destination">destination</option>
-                          <option value="request_time">request_time</option>
-                          <option value="eta_car">eta_car</option>
-                          <option value="eta_destination">eta_destination</option>
-                          <option value="car_cur_location">car_cur_location</option>
-                          <option value="battery_level">battery_level</option>
-                        <option value="fare">fare</option>
+                    <option value="car_current_location">car_current_loc</option>
+                  </optgroup>
+                  <optgroup label="Binary">
+                          <option value="accessible">accessible</option>
+                          <option value="occupied">occupied</option>
+                    <option value="assigned">assigned</option>
+                    <option value="traffic_delay">traffic_delay</option>
+                    <option value="cancels">cancels</option>
+                    <option value="change_destination">change_dest</option>
+                    <option value="end_early">end_early</option>
+                  </optgroup>
+                  <optgroup label="Time (T+)">
+                    <option value="eta_vehicle">eta_vehicle</option>
+                    <option value="eta_destination">eta_destination</option>
+                    <option value="request_time">request_time</option>
+                  </optgroup>
+                  <optgroup label="Other">
+                    <option value="battery">battery</option>
+                  </optgroup>
                         </select>
+                
+                {/* Value input based on type */}
+                {isCoord ? (
+                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '9px' }}>
+                    <span>(</span>
+                    <input
+                      type="text"
+                      value={test.value}
+                      onChange={(e) => {
+                        const error = validateValue(test.attribute, e.target.value);
+                        setInteractionTests(interactionTests.map(t => 
+                          t.id === test.id ? { ...t, value: e.target.value, error } : t
+                        ));
+                      }}
+                      disabled={!test.attribute}
+                      placeholder="x,y"
+                      style={{ width: '40px', padding: '2px', fontSize: '9px', border: '1px solid #ccc', textAlign: 'center' }}
+                    />
+                    <span>)</span>
                       </div>
-                    
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <label style={{ fontSize: '10px', color: '#666', whiteSpace: 'nowrap' }}>
-                          Val:
-                        </label>
-                      <div style={{ 
-                        flex: 1, 
-                        display: 'flex', 
-                        alignItems: 'center',
-                        border: '1px solid #ccc',
-                        backgroundColor: test.attribute ? 'white' : '#f0f0f0'
-                      }}>
-                        {valueInput.prefix && (
-                          <span style={{ padding: '4px', fontSize: '10px', color: '#666', backgroundColor: '#f5f5f5' }}>
-                            {valueInput.prefix}
-                          </span>
-                        )}
+                ) : isTime ? (
+                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '9px' }}>
+                    <span>T+</span>
                         <input
                           type="text"
-                          value={test.value}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            const error = validateValue(test.attribute, newValue);
-                            setInteractionTests(interactionTests.map(t => 
-                              t.id === test.id ? { ...t, value: newValue, error } : t
-                            ));
-                          }}
-                          disabled={!test.attribute}
-                          placeholder={test.attribute ? valueInput.placeholder : "Select attribute first"}
-                          style={{
-                            flex: 1,
-                            padding: '4px',
-                            fontSize: '10px',
-                            border: 'none',
-                            backgroundColor: 'transparent',
-                            color: test.attribute ? '#000000' : '#999',
-                            cursor: test.attribute ? 'text' : 'not-allowed',
-                            outline: 'none'
-                          }}
+                      value={test.value}
+                      onChange={(e) => {
+                        const error = validateValue(test.attribute, e.target.value);
+                        setInteractionTests(interactionTests.map(t => 
+                          t.id === test.id ? { ...t, value: e.target.value, error } : t
+                        ));
+                      }}
+                      disabled={!test.attribute}
+                      placeholder="0"
+                      style={{ width: '30px', padding: '2px', fontSize: '9px', border: '1px solid #ccc', textAlign: 'center' }}
                         />
-                        {valueInput.suffix && (
-                          <span style={{ padding: '4px', fontSize: '10px', color: '#666', backgroundColor: '#f5f5f5' }}>
-                            {valueInput.suffix}
-                          </span>
-                        )}
                       </div>
-                      <button
-                        onClick={() => setInteractionTests(interactionTests.filter(t => t.id !== test.id))}
-                        style={{
-                          padding: '4px 8px',
-                          fontSize: '12px',
-                            border: '1px solid #ccc',
-                            backgroundColor: 'white',
-                          cursor: 'pointer',
-                          color: '#d32f2f'
-                          }}
-                      >
-                        ×
-                      </button>
-                      </div>
-                    
-                    {test.error && (
-                      <div style={{ fontSize: '9px', color: '#f44336', marginTop: '2px' }}>
-                        ⚠ {test.error}
-                      </div>
-                    )}
+                ) : test.attribute === 'battery' ? (
+                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '9px' }}>
+                    <input
+                      type="text"
+                      value={test.value}
+                      onChange={(e) => {
+                        const error = validateValue(test.attribute, e.target.value);
+                        setInteractionTests(interactionTests.map(t => 
+                          t.id === test.id ? { ...t, value: e.target.value, error } : t
+                        ));
+                      }}
+                      disabled={!test.attribute}
+                      placeholder="0"
+                      style={{ width: '30px', padding: '2px', fontSize: '9px', border: '1px solid #ccc', textAlign: 'center' }}
+                    />
+                    <span>/100</span>
                     </div>
+                ) : isBinary ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '9px' }}>
+                    <select
+                      value={test.value}
+                      onChange={(e) => setInteractionTests(interactionTests.map(t => 
+                        t.id === test.id ? { ...t, value: e.target.value, value2: '' } : t
+                      ))}
+                      style={{ width: '50px', padding: '2px', fontSize: '9px', border: '1px solid #ccc' }}
+                    >
+                      <option value="">--</option>
+                      <option value="true">true</option>
+                      <option value="false">false</option>
+                    </select>
+                    {/* Extra field for assigned (rider selection) */}
+                    {test.attribute === 'assigned' && test.value === 'true' && (
+                      <select
+                        value={test.value2}
+                        onChange={(e) => setInteractionTests(interactionTests.map(t => 
+                          t.id === test.id ? { ...t, value2: e.target.value } : t
+                        ))}
+                        style={{ width: '50px', padding: '2px', fontSize: '9px', border: '1px solid #ccc' }}
+                      >
+                        <option value="">rider?</option>
+                        <option value="R1">R1</option>
+                        <option value="R2">R2</option>
+                        <option value="R3">R3</option>
+                        <option value="R1,R2">R1,R2</option>
+                        <option value="R1,R3">R1,R3</option>
+                        <option value="R2,R3">R2,R3</option>
+                      </select>
+                    )}
+                    {/* Extra field for end_early (coordinates) */}
+                    {test.attribute === 'end_early' && test.value === 'true' && (
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span>(</span>
+                        <input
+                          type="text"
+                          value={test.value2}
+                          onChange={(e) => setInteractionTests(interactionTests.map(t => 
+                            t.id === test.id ? { ...t, value2: e.target.value } : t
+                          ))}
+                          placeholder="x,y"
+                          style={{ width: '35px', padding: '2px', fontSize: '9px', border: '1px solid #ccc', textAlign: 'center' }}
+                        />
+                        <span>)</span>
                   </div>
+                    )}
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    value={test.value}
+                    onChange={(e) => setInteractionTests(interactionTests.map(t => 
+                      t.id === test.id ? { ...t, value: e.target.value } : t
+                    ))}
+                    disabled={!test.attribute}
+                    placeholder="val"
+                    style={{ width: '50px', padding: '2px', fontSize: '9px', border: '1px solid #ccc' }}
+                  />
+                )}
+                
+                <button
+                  onClick={() => setInteractionTests(interactionTests.filter(t => t.id !== test.id))}
+                  style={{ padding: '2px 5px', fontSize: '10px', border: '1px solid #ccc', backgroundColor: 'white', cursor: 'pointer', color: '#d32f2f' }}
+                >
+                  ×
+                </button>
+                
+                {test.error && <span style={{ fontSize: '8px', color: '#f44336' }}>⚠{test.error}</span>}
                 </div>
               );
             })}
             
           {/* Add Interaction Test Button */}
-          {interactionTests.length < 10 && (
+          {interactionTests.length < 15 && (
               <button
                 onClick={() => {
                 const newId = interactionTests.length > 0 ? Math.max(...interactionTests.map(t => t.id)) + 1 : 1;
@@ -648,21 +819,13 @@ function App() {
                   stakeholder: '', 
                   attribute: '', 
                   value: '',
+                  value2: '',
                   error: ''
                   }]);
                 }}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  fontSize: '11px',
-                  border: '2px dashed #ccc',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                  color: '#666',
-                  fontWeight: '500'
-                }}
-              >
-              + Add Interaction Test
+              style={{ width: '100%', padding: '6px', fontSize: '10px', border: '2px dashed #ccc', backgroundColor: 'white', cursor: 'pointer', color: '#666' }}
+            >
+              + Add Test
               </button>
             )}
 
@@ -768,15 +931,20 @@ function App() {
                 {interactionTests
                   .filter(t => t.stakeholder && t.attribute)
                   .map(t => {
-                    const formatName = (name: string) => {
-                      return name.split('_').map(word => 
-                        word.charAt(0).toUpperCase() + word.slice(1)
-                      ).join(' ');
-                    };
+                    const formatName = (name: string) => name.replace('_', ' ').replace('rider', 'R').replace('vehicle', 'V');
+                    let displayVal = '';
+                    if (t.value && !t.error) {
+                      if (t.attribute === 'assigned' && t.value === 'true' && t.value2) {
+                        displayVal = ` = assigned(${t.value2})`;
+                      } else if (t.attribute === 'end_early' && t.value === 'true' && t.value2) {
+                        displayVal = ` = end_early(${t.value2})`;
+                      } else {
+                        displayVal = ` = ${getFormattedValue(t.attribute, t.value)}`;
+                      }
+                    }
                     return (
                       <div key={t.id} style={{ marginBottom: '4px' }}>
-                        • {formatName(t.stakeholder)}: {t.attribute}
-                        {t.value && !t.error && ` = ${getFormattedValue(t.attribute, t.value)}`}
+                        • {formatName(t.stakeholder)}: {t.attribute}{displayVal}
                       </div>
                     );
                   })
