@@ -17,6 +17,10 @@ function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [showInstructions, setShowInstructions] = useState(false);
   const [instructionsContent, setInstructionsContent] = useState('');
+  const [showPredictionPopup, setShowPredictionPopup] = useState(false);
+  const [predictionText, setPredictionText] = useState('');
+  const [expectedOutput, setExpectedOutput] = useState('');
+  const [interactions, setInteractions] = useState('');
   const [editableValues, setEditableValues] = useState({
     r1_request: 'T+0 min',
     r1_pickup: '(14, 12)',
@@ -27,10 +31,9 @@ function App() {
     car_assigned: 'Assigned to R1'
   });
   const [testOutput, setTestOutput] = useState('The output made sense in this case. rider_1 was assigned the car first because it was in batch one and is closer to the car, satisfying our program constraints.');
-  const [studentMessage, setStudentMessage] = useState('Hi! I think my code is correct, am I considering all edge cases? I tested it with:\n  • rider_1: request_time = T+0, pickup_location = (14, 12)\n  • rider_2: request_time = T+7, pickup_location = (15,15)\n  • car_1: car_cur_location = (5, 4)  • batch_time=5_mins');
-  const [testCaseA, setTestCaseA] = useState('A) "Try testing with rider_1 and rider_2 requesting at the exact same time"');
-  const [testCaseB, setTestCaseB] = useState('B) "You haven\'t considered the possibility of rider_2 cancelling the ride and the broader effect on the system."');
-  const [testCaseC, setTestCaseC] = useState('C) "Although this passed, you haven\'t tested when both riders submit a request in the same batch and aren\'t at the same location."');
+  const [testCaseA, setTestCaseA] = useState('I think the bug is that the vehicle will be matched with rider_1, but since rider_2 is within batch period and on the way, it should match with rider_2 first.');
+  const [testCaseB, setTestCaseB] = useState('The bug is likely in how you calculate distances. The vehicle might be picking the rider with the shorter straight-line distance rather than considering the route.');
+  const [testCaseC, setTestCaseC] = useState('I think the issue is that your batch timing isn\'t working correctly, so rider_2\'s request isn\'t being considered in the same batch as rider_1.');
   
   interface TestCase {
     id: number;
@@ -193,7 +196,7 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className="app" style={{ padding: '20px' }}>
       <div className="container container-1">
         <div style={{ paddingTop: '10px' }}>
           <h3 style={{ marginTop: '0', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
@@ -296,157 +299,109 @@ function App() {
             </div>
           </div>
           
-          {/* Test Values Table */}
-          <div style={{ marginTop: '15px', fontSize: '12px' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#000000' }}>Test Student's Code</h4>
-            <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#666', fontStyle: 'italic' }}>
-              Modify the values below to test different scenarios
-            </p>
-            <table style={{ 
-              width: '100%', 
-              borderCollapse: 'collapse',
-              border: '1px solid #ccc'
-            }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f0f0f0' }}>
-                  <th style={{ border: '1px solid #ccc', padding: '4px 6px', textAlign: 'left' }}>Entity</th>
-                  <th style={{ border: '1px solid #ccc', padding: '4px 6px', textAlign: 'left' }}>Attribute</th>
-                  <th style={{ border: '1px solid #ccc', padding: '4px 6px', textAlign: 'left' }}>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>Rider 1</td>
-                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>request_time</td>
-                  <td style={{ border: '1px solid #ccc', padding: '2px' }}>
-                    <select 
-                      value={editableValues.r1_request}
-                      onChange={(e) => handleValueChange('r1_request', e.target.value)}
-                      style={{ width: '100%', border: 'none', padding: '2px 4px', fontSize: '12px' }}
-                    >
-                      <option value="T+0 min">T+0 min</option>
-                      <option value="T+1 min">T+1 min</option>
-                      <option value="T+2 min">T+2 min</option>
-                      <option value="T+3 min">T+3 min</option>
-                      <option value="T+5 min">T+5 min</option>
-                      <option value="T+10 min">T+10 min</option>
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>Rider 1</td>
-                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>pickup_location</td>
-                  <td style={{ border: '1px solid #ccc', padding: '2px' }}>
-                    <select 
-                      value={editableValues.r1_pickup}
-                      onChange={(e) => handleValueChange('r1_pickup', e.target.value)}
-                      style={{ width: '100%', border: 'none', padding: '2px 4px', fontSize: '12px' }}
-                    >
-                      <option value="(5, 5)">(5, 5)</option>
-                      <option value="(10, 10)">(10, 10)</option>
-                      <option value="(14, 12)">(14, 12)</option>
-                      <option value="(15, 15)">(15, 15)</option>
-                      <option value="(18, 18)">(18, 18)</option>
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>Rider 2</td>
-                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>request_time</td>
-                  <td style={{ border: '1px solid #ccc', padding: '2px' }}>
-                    <select 
-                      value={editableValues.r2_request}
-                      onChange={(e) => handleValueChange('r2_request', e.target.value)}
-                      style={{ width: '100%', border: 'none', padding: '2px 4px', fontSize: '12px' }}
-                    >
-                      <option value="T+0 min">T+0 min</option>
-                      <option value="T+1 min">T+1 min</option>
-                      <option value="T+2 min">T+2 min</option>
-                      <option value="T+3 min">T+3 min</option>
-                      <option value="T+5 min">T+5 min</option>
-                      <option value="T+10 min">T+10 min</option>
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>Rider 2</td>
-                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>pickup_location</td>
-                  <td style={{ border: '1px solid #ccc', padding: '2px' }}>
-                    <select 
-                      value={editableValues.r2_pickup}
-                      onChange={(e) => handleValueChange('r2_pickup', e.target.value)}
-                      style={{ width: '100%', border: 'none', padding: '2px 4px', fontSize: '12px' }}
-                    >
-                      <option value="(5, 5)">(5, 5)</option>
-                      <option value="On route (10, 8)">On route (10, 8)</option>
-                      <option value="(10, 10)">(10, 10)</option>
-                      <option value="(12, 12)">(12, 12)</option>
-                      <option value="(15, 15)">(15, 15)</option>
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>Car 1</td>
-                  <td style={{ border: '1px solid #ccc', padding: '4px 6px' }}>car_cur_location</td>
-                  <td style={{ border: '1px solid #ccc', padding: '2px' }}>
-                    <select 
-                      value={editableValues.car_location}
-                      onChange={(e) => handleValueChange('car_location', e.target.value)}
-                      style={{ width: '100%', border: 'none', padding: '2px 4px', fontSize: '12px' }}
-                    >
-                      <option value="(0, 0)">(0, 0)</option>
-                      <option value="(5, 4)">(5, 4)</option>
-                      <option value="(8, 8)">(8, 8)</option>
-                      <option value="(10, 10)">(10, 10)</option>
-                      <option value="(15, 15)">(15, 15)</option>
-                    </select>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          {/* Input Fields Section */}
+          <div style={{ marginTop: '15px', marginRight: '20px' }}>
+            <div style={{ padding: '10px', border: '1px solid #ccc', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
+              <h4 style={{ marginTop: '0', marginBottom: '10px', fontSize: '13px', fontWeight: 'bold' }}>
+                Stakeholder-Attribute-Value Pairs:
+              </h4>
+              <div style={{ fontSize: '11px', marginBottom: '10px', lineHeight: '1.5' }}>
+                <div>• rider_1: request_time = T+0</div>
+                <div>• rider_2: request_time = T+4</div>
+                <div>• rider_1: pickup_location = (15, 15)</div>
+                <div>• rider_2: pickup_location = (14, 12)</div>
+                <div>• rider_2: destination = (15, 15)</div>
+                <div>• vehicle_current_location = (5, 4)</div>
+              </div>
+            
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
+                  Expected Output:
+                </label>
+                <input
+                  type="text"
+                  value={expectedOutput}
+                  onChange={(e) => setExpectedOutput(e.target.value)}
+                  placeholder="Enter expected output..."
+                  style={{
+                    width: '100%',
+                    padding: '6px',
+                    fontSize: '12px',
+                    border: '1px solid #ccc',
+                    backgroundColor: 'white'
+                  }}
+                />
+              </div>
+              
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
+                  Interactions:
+                </label>
+                <textarea
+                  value={interactions}
+                  onChange={(e) => setInteractions(e.target.value)}
+                  placeholder="Describe interactions..."
+                  style={{
+                    width: '100%',
+                    minHeight: '60px',
+                    padding: '6px',
+                    fontSize: '12px',
+                    border: '1px solid #ccc',
+                    backgroundColor: 'white',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
 
-          <div style={{ marginTop: '8px' }}>
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                setShowInstructions(true);
-              }}
-              style={{
-                fontSize: '11px',
-                color: '#007bff',
-                textDecoration: 'underline',
-                cursor: 'pointer'
-              }}
-            >
-              Student Instructions
-            </a>
-          </div>
-
-          {/* Begin Simulation Button */}
-          <div style={{ marginTop: '20px' }}>
-            <button
-              style={{
-                width: '100%',
-                padding: '12px',
-                fontSize: '14px',
-                border: 'none',
-                backgroundColor: '#007bff',
-                color: 'white',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              Begin Simulation
-            </button>
+              {/* Begin Simulation Button */}
+              <button
+                onClick={() => setShowPredictionPopup(true)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '14px',
+                  border: 'none',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                Simulate Scenario with Tests
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      <div className="container container-2">
+      <div className="container container-2" style={{ position: 'relative' }}>
         <div style={{ padding: '10px 10px 10px 0' }}>
+          {/* Oracle Button */}
+          <button
+            onClick={() => console.log('TA Assistant Oracle clicked')}
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              padding: '6px 10px',
+              fontSize: '11px',
+              border: '1px solid #ccc',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+              zIndex: 10,
+              borderRadius: '4px'
+            }}
+          >
+            <span style={{ fontSize: '14px' }}>🤖</span>
+            <span>Talk to TA Assistant Oracle</span>
+          </button>
+          
           <h3 style={{ marginTop: '0', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
-            Selected Attributes
+            Select stakeholder-attribute pairs
           </h3>
           
           {/* Mock selection 1: rider_1 request_time */}
@@ -654,82 +609,196 @@ function App() {
             </div>
           </div>
 
-          <h3 style={{ marginTop: '20px', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
-            Student's Code Explanation
-          </h3>
-          
-          <div style={{
-            padding: '10px',
-            backgroundColor: '#f9f9f9',
-            border: '1px solid #ddd',
-            marginBottom: '15px',
-            fontSize: '12px',
-            lineHeight: '1.5',
-            fontStyle: 'italic'
-          }}>
-            "I wrote my rideshare assignment algorithm to check the request_time first and assign cars to riders in order. 
-            I used a priority queue sorted by request_time to make sure earlier requests get served first. 
-            Then I check pickup_location distances to break ties if two riders requested at the same time."
+          {/* Test Case Section - moved from container-3 */}
+          <div style={{ marginTop: '15px' }}>
+            <h3 style={{ marginTop: '0', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
+              Select test case:
+            </h3>
+            
+            {/* Test Case Items */}
+            {testCases.map((testCase) => {
+              const getIconAndColor = (category: string) => {
+                if (category.startsWith('rider_1')) return { icon: '/icons/rider.svg', color: 'blue' };
+                if (category.startsWith('rider_2')) return { icon: '/icons/rider.svg', color: 'red' };
+                if (category.startsWith('vehicle_1')) return { icon: '/icons/vehicle.svg', color: 'blue' };
+                if (category.startsWith('vehicle_2')) return { icon: '/icons/vehicle.svg', color: 'red' };
+                if (category === 'system') return { icon: '/icons/system.svg', color: 'black' };
+                return { icon: '/icons/rider.svg', color: 'blue' };
+              };
+              
+              const iconData = getIconAndColor(testCase.category);
+              
+              return (
+                <div key={testCase.id} style={{ 
+                  marginBottom: '10px',
+                  padding: '10px',
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  border: '1px solid #e0e0e0'
+                }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                    <input 
+                      type="checkbox" 
+                      checked 
+                      onChange={() => setTestCases(testCases.filter(tc => tc.id !== testCase.id))}
+                      style={{ marginTop: '8px' }}
+                    />
+                    <img 
+                      src={iconData.icon} 
+                      alt="icon" 
+                      style={{ 
+                        width: '28px', 
+                        height: '28px', 
+                        filter: iconData.color === 'blue' ? 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)' :
+                                iconData.color === 'red' ? 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)' :
+                                'none'
+                      }} 
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <select
+                        value={testCase.category}
+                        onChange={(e) => setTestCases(testCases.map(tc => 
+                          tc.id === testCase.id ? { ...tc, category: e.target.value } : tc
+                        ))}
+                        style={{ 
+                          width: '100%',
+                          padding: '4px 6px', 
+                          fontSize: '10px',
+                          border: '1px solid #ccc',
+                          backgroundColor: 'white',
+                          color: '#000000',
+                          marginBottom: '4px',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        <option value="rider_1">Rider 1</option>
+                        <option value="rider_2">Rider 2</option>
+                        <option value="vehicle_1">Vehicle 1</option>
+                        <option value="vehicle_2">Vehicle 2</option>
+                        <option value="system">System</option>
+                      </select>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                        <label style={{ fontSize: '10px', color: '#666', whiteSpace: 'nowrap' }}>
+                          Attr:
+                        </label>
+                        <select
+                          value={testCase.attribute}
+                          onChange={(e) => setTestCases(testCases.map(tc => 
+                            tc.id === testCase.id ? { ...tc, attribute: e.target.value } : tc
+                          ))}
+                          style={{
+                            flex: 1,
+                            padding: '4px 6px',
+                            fontSize: '10px',
+                            border: '1px solid #ccc',
+                            backgroundColor: 'white',
+                            color: '#000000',
+                            borderRadius: '4px'
+                          }}
+                        >
+                          <option value="pickup_location">pickup_location</option>
+                          <option value="destination">destination</option>
+                          <option value="fare">fare</option>
+                          <option value="request_time">request_time</option>
+                          <option value="eta_car">eta_car</option>
+                          <option value="eta_destination">eta_destination</option>
+                          <option value="accessible">accessible</option>
+                          <option value="pickup_distance">pickup_distance</option>
+                          <option value="occupied">occupied</option>
+                          <option value="assigned_other">assigned_other</option>
+                          <option value="car_cur_location">car_cur_location</option>
+                          <option value="battery_level">battery_level</option>
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <label style={{ fontSize: '10px', color: '#666', whiteSpace: 'nowrap' }}>
+                          Val:
+                        </label>
+                        <input
+                          type="text"
+                          value={testCase.value}
+                          onChange={(e) => setTestCases(testCases.map(tc => 
+                            tc.id === testCase.id ? { ...tc, value: e.target.value } : tc
+                          ))}
+                          style={{
+                            flex: 1,
+                            padding: '4px 6px',
+                            fontSize: '10px',
+                            border: '1px solid #ccc',
+                            backgroundColor: 'white',
+                            color: '#000000',
+                            borderRadius: '4px'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            
+            {/* Add New Test Case Button */}
+            {testCases.length < 5 && (
+              <button
+                onClick={() => {
+                  const newId = testCases.length > 0 ? Math.max(...testCases.map(tc => tc.id)) + 1 : 1;
+                  setTestCases([...testCases, { 
+                    id: newId, 
+                    category: 'rider_1', 
+                    attribute: 'request_time', 
+                    value: '' 
+                  }]);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  fontSize: '11px',
+                  border: '2px dashed #ccc',
+                  backgroundColor: 'white',
+                  cursor: 'pointer',
+                  color: '#666',
+                  borderRadius: '8px',
+                  fontWeight: '500'
+                }}
+              >
+                + Add Test Case
+              </button>
+            )}
           </div>
 
-          {/* Test Student Code Button */}
-            <button
-            disabled
-              style={{
-              width: '100%',
-              padding: '8px',
-              fontSize: '12px',
-              border: '1px solid #a8c5a0',
-              backgroundColor: '#c5d9be',
-              color: '#4a5f45',
-              cursor: 'not-allowed',
-                fontWeight: '500',
-              textAlign: 'center',
-              marginBottom: '10px'
-              }}
-            >
-            Test Student Code ✓
-            </button>
-
-          {/* Test Output */}
-              <div style={{
-            padding: '8px',
-            backgroundColor: '#f0f7ed',
-            border: '1px solid #a8c5a0',
-            fontSize: '11px',
-            lineHeight: '1.4',
-            color: '#2d3a2b',
-            marginBottom: '15px'
+        </div>
+      </div>
+      <div className="container container-3" style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5' }}>
+        {/* Header */}
+        <div style={{
+          padding: '8px 12px',
+          backgroundColor: 'white',
+          borderBottom: '1px solid #e0e0e0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            backgroundColor: '#ff9800',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px'
           }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px', fontSize: '10px', color: '#4a5f45' }}>
-              Test Output:
-            </div>
-            <div
-              contentEditable
-              suppressContentEditableWarning
-              onBlur={(e) => setTestOutput(e.currentTarget.textContent || '')}
-              style={{ outline: 'none' }}
-            >
-              {testOutput}
+            👨‍💻
+          </div>
+          <div>
+            <h3 style={{ margin: '0', fontSize: '13px', fontWeight: 'bold', color: '#000' }}>
+              Office Hour!
+            </h3>
+            <div style={{ fontSize: '10px', color: '#666' }}>
+              First-year • CS 101 • Rideshare domain exp
             </div>
           </div>
         </div>
-      </div>
-      <div className="container container-3" style={{ display: 'flex', flexDirection: 'column' }}>
-        {/* Student Profile */}
-                <div style={{
-          padding: '8px',
-          backgroundColor: '#f0f0f0',
-          borderBottom: '1px solid #ccc'
-        }}>
-          <h3 style={{ marginTop: '0', marginBottom: '4px', fontSize: '13px', color: '#000000' }}>
-            Student Profile
-          </h3>
-          <div style={{ fontSize: '11px', lineHeight: '1.3', color: '#333' }}>
-            <strong>Year:</strong> First-year | <strong>Course:</strong> CS 101<br/>
-            <strong>Background:</strong> Rideshare domain exp | <strong>Programming:</strong> Beginner
-          </div>
-          </div>
           
         {/* Chat Messages */}
         <div style={{ 
@@ -738,70 +807,159 @@ function App() {
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
-          gap: '10px'
+          gap: '8px',
+          backgroundColor: '#f5f5f5'
         }}>
-          {/* Student's message */}
-          <div style={{ display: 'flex', gap: '8px' }}>
+          {/* Message 1: Student lists test cases */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
             <div style={{
               width: '28px',
               height: '28px',
               borderRadius: '50%',
-              backgroundColor: '#007bff',
-              color: 'white',
+              backgroundColor: '#ff9800',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '13px',
-              fontWeight: 'bold',
+              fontSize: '14px',
               flexShrink: 0
             }}>
-              S
+              👨‍💻
             </div>
-            <div style={{
-              flex: 1,
-              padding: '8px',
-              backgroundColor: '#f0f0f0',
-              border: '1px solid #ddd',
-              fontSize: '12px',
-              lineHeight: '1.4'
-            }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '4px', fontSize: '11px', color: '#666' }}>
-                Student • 2 min ago
+            <div style={{ flex: 1, maxWidth: '80%' }}>
+              <div style={{
+                padding: '8px 10px',
+                backgroundColor: 'white',
+                borderRadius: '10px',
+                fontSize: '11px',
+                lineHeight: '1.4',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+              }}>
+                Here are my test cases:
+                <br/>• rider_1: request_time = T+0, pickup_location = (14, 12)
+                <br/>• rider_2: request_time = T+7, pickup_location = (15, 15)
+                <br/>• car_1: car_cur_location = (5, 4)
+                <br/>• batch_time = 5 mins
               </div>
-              <div
-                contentEditable
-                suppressContentEditableWarning
-                onBlur={(e) => setStudentMessage(e.currentTarget.textContent || '')}
-                style={{ 
-                  outline: 'none',
-                  whiteSpace: 'pre-wrap'
-                }}
-              >
-                {studentMessage}
-              </div>
-        </div>
-      </div>
+            </div>
+          </div>
 
-          <div style={{ fontSize: '11px', color: '#666', fontWeight: 'bold', marginBottom: '8px' }}>
+          {/* Message 2: Student says code passed but has bug */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              backgroundColor: '#ff9800',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              flexShrink: 0
+            }}>
+              👨‍💻
+            </div>
+            <div style={{ flex: 1, maxWidth: '80%' }}>
+              <div style={{
+                padding: '8px 10px',
+                backgroundColor: 'white',
+                borderRadius: '10px',
+                fontSize: '11px',
+                lineHeight: '1.4',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+              }}>
+                My code passed all of these tests, but there's still a bug. Can you help me write a test to find the bug?
+              </div>
+            </div>
+          </div>
+
+          {/* Message 3: TA provides test case */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              backgroundColor: '#4caf50',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '11px',
+              flexShrink: 0,
+              color: 'white',
+              fontWeight: 'bold'
+            }}>
+              TA
+            </div>
+            <div style={{ flex: 1, maxWidth: '80%' }}>
+              <div style={{
+                padding: '8px 10px',
+                backgroundColor: '#e8f5e9',
+                borderRadius: '10px',
+                fontSize: '11px',
+                lineHeight: '1.4',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+              }}>
+                Here is a good interaction test:
+                <br/>• rider_1: request_time = T+0
+                <br/>• rider_2: request_time = T+4
+                <br/>• rider_1: pickup_location = (15, 15)
+                <br/>• rider_2: pickup_location = (14, 12)
+                <br/>• rider_2: destination = (15, 15)
+                <br/>• vehicle_current_location = (5, 4)
+              </div>
+            </div>
+          </div>
+
+          {/* Message 4: Student asks for explanation */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              backgroundColor: '#ff9800',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              flexShrink: 0
+            }}>
+              👨‍💻
+            </div>
+            <div style={{ flex: 1, maxWidth: '80%' }}>
+              <div style={{
+                padding: '8px 10px',
+                backgroundColor: 'white',
+                borderRadius: '10px',
+                fontSize: '11px',
+                lineHeight: '1.4',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+              }}>
+                Can you explain why? What do you think will happen vs. what should happen?
+              </div>
+            </div>
+          </div>
+
+          <div style={{ fontSize: '11px', color: '#333', fontWeight: 'bold', marginTop: '5px', marginBottom: '6px' }}>
             Select a response:
           </div>
 
           {/* Response Text Options */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '15px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
             <div
               contentEditable
               suppressContentEditableWarning
               onBlur={(e) => setTestCaseA(e.currentTarget.textContent || '')}
               style={{
-                padding: '8px',
-                fontSize: '11px',
-                border: '1px solid #ccc',
-                backgroundColor: 'white',
+                padding: '8px 10px',
+                fontSize: '10px',
+                border: '2px solid #2196F3',
+                backgroundColor: '#E3F2FD',
                 color: '#000000',
                 cursor: 'pointer',
                 textAlign: 'left',
                 lineHeight: '1.3',
-                outline: 'none'
+                outline: 'none',
+                borderRadius: '6px',
+                transition: 'border-color 0.2s'
               }}
             >
               {testCaseA}
@@ -812,15 +970,17 @@ function App() {
               suppressContentEditableWarning
               onBlur={(e) => setTestCaseB(e.currentTarget.textContent || '')}
               style={{
-                padding: '8px',
-                fontSize: '11px',
-                border: '1px solid #ccc',
+                padding: '8px 10px',
+                fontSize: '10px',
+                border: '2px solid #e0e0e0',
                 backgroundColor: 'white',
                 color: '#000000',
                 cursor: 'pointer',
                 textAlign: 'left',
                 lineHeight: '1.3',
-                outline: 'none'
+                outline: 'none',
+                borderRadius: '6px',
+                transition: 'border-color 0.2s'
               }}
             >
               {testCaseB}
@@ -831,169 +991,138 @@ function App() {
               suppressContentEditableWarning
               onBlur={(e) => setTestCaseC(e.currentTarget.textContent || '')}
               style={{
-                padding: '8px',
-                fontSize: '11px',
-                border: '1px solid #ccc',
+                padding: '8px 10px',
+                fontSize: '10px',
+                border: '2px solid #e0e0e0',
                 backgroundColor: 'white',
                 color: '#000000',
                 cursor: 'pointer',
                 textAlign: 'left',
                 lineHeight: '1.3',
-                outline: 'none'
+                outline: 'none',
+                borderRadius: '6px',
+                transition: 'border-color 0.2s'
               }}
             >
               {testCaseC}
             </div>
           </div>
-
-          <div style={{ fontSize: '11px', color: '#666', fontWeight: 'bold', marginBottom: '6px' }}>
-            Select test case:
-          </div>
-
-          {/* Test Case Items */}
-          {testCases.map((testCase) => {
-            const getIconAndColor = (category: string) => {
-              if (category.startsWith('rider_1')) return { icon: '/icons/rider.svg', color: 'blue' };
-              if (category.startsWith('rider_2')) return { icon: '/icons/rider.svg', color: 'red' };
-              if (category.startsWith('vehicle_1')) return { icon: '/icons/vehicle.svg', color: 'blue' };
-              if (category.startsWith('vehicle_2')) return { icon: '/icons/vehicle.svg', color: 'red' };
-              if (category === 'system') return { icon: '/icons/system.svg', color: 'black' };
-              return { icon: '/icons/rider.svg', color: 'blue' };
-            };
-            
-            const iconData = getIconAndColor(testCase.category);
-            const categoryLabel = testCase.category === 'rider_1' ? 'Rider 1' : 
-                                 testCase.category === 'rider_2' ? 'Rider 2' :
-                                 testCase.category === 'vehicle_1' ? 'Vehicle 1' :
-                                 testCase.category === 'vehicle_2' ? 'Vehicle 2' : 'System';
-            
-            return (
-              <div key={testCase.id} style={{ marginBottom: '8px' }}>
-                <div style={{ display: 'flex', gap: '4px', alignItems: 'flex-start' }}>
-                  <input 
-                    type="checkbox" 
-                    checked 
-                    onChange={() => setTestCases(testCases.filter(tc => tc.id !== testCase.id))}
-                    style={{ marginTop: '8px' }}
-                  />
-                  <img 
-                    src={iconData.icon} 
-                    alt="icon" 
-                    style={{ 
-                      width: '28px', 
-                      height: '28px', 
-                      filter: iconData.color === 'blue' ? 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)' :
-                              iconData.color === 'red' ? 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)' :
-                              'none'
-                    }} 
-                  />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <select
-                      value={testCase.category}
-                      onChange={(e) => setTestCases(testCases.map(tc => 
-                        tc.id === testCase.id ? { ...tc, category: e.target.value } : tc
-                      ))}
-                      style={{ 
-                        width: '100%',
-                        padding: '2px 4px', 
-                        fontSize: '10px',
-                        border: '1px solid #ccc',
-                        backgroundColor: '#f0f0f0',
-                        color: '#000000',
-                        marginBottom: '3px'
-                      }}
-                    >
-                      <option value="rider_1">Rider 1</option>
-                      <option value="rider_2">Rider 2</option>
-                      <option value="vehicle_1">Vehicle 1</option>
-                      <option value="vehicle_2">Vehicle 2</option>
-                      <option value="system">System</option>
-                    </select>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '3px' }}>
-                      <label style={{ fontSize: '9px', color: '#000000', whiteSpace: 'nowrap' }}>
-                        Attr:
-                      </label>
-                      <select
-                        value={testCase.attribute}
-                        onChange={(e) => setTestCases(testCases.map(tc => 
-                          tc.id === testCase.id ? { ...tc, attribute: e.target.value } : tc
-                        ))}
-                        style={{
-                          flex: 1,
-                          padding: '2px 4px',
-                          fontSize: '9px',
-                          border: '1px solid #ccc',
-                          backgroundColor: '#f0f0f0',
-                          color: '#000000'
-                        }}
-                      >
-                        <option value="pickup_location">pickup_location</option>
-                        <option value="destination">destination</option>
-                        <option value="fare">fare</option>
-                        <option value="request_time">request_time</option>
-                        <option value="eta_car">eta_car</option>
-                        <option value="eta_destination">eta_destination</option>
-                        <option value="accessible">accessible</option>
-                        <option value="pickup_distance">pickup_distance</option>
-                        <option value="occupied">occupied</option>
-                        <option value="assigned_other">assigned_other</option>
-                        <option value="car_cur_location">car_cur_location</option>
-                        <option value="battery_level">battery_level</option>
-                      </select>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                      <label style={{ fontSize: '9px', color: '#000000', whiteSpace: 'nowrap' }}>
-                        Val:
-                      </label>
-                      <input
-                        type="text"
-                        value={testCase.value}
-                        onChange={(e) => setTestCases(testCases.map(tc => 
-                          tc.id === testCase.id ? { ...tc, value: e.target.value } : tc
-                        ))}
-                        style={{
-                          flex: 1,
-                          padding: '2px 4px',
-                          fontSize: '9px',
-                          border: '1px solid #ccc',
-                          backgroundColor: 'white',
-                          color: '#000000'
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Add New Test Case Button */}
-          {testCases.length < 5 && (
-            <button
-              onClick={() => {
-                const newId = testCases.length > 0 ? Math.max(...testCases.map(tc => tc.id)) + 1 : 1;
-                setTestCases([...testCases, { 
-                  id: newId, 
-                  category: 'rider_1', 
-                  attribute: 'request_time', 
-                  value: '' 
-                }]);
-              }}
-              style={{
-                width: '100%',
-                padding: '6px',
-                fontSize: '10px',
-                border: '1px solid #ccc',
-                backgroundColor: 'white',
-                cursor: 'pointer',
-                color: '#000000'
-              }}
-            >
-              + Add Test Case
-            </button>
-          )}
         </div>
       </div>
+      
+      {/* Prediction Popup */}
+      {showPredictionPopup && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000
+          }}
+          onClick={() => setShowPredictionPopup(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              width: '700px',
+              border: '1px solid #ccc',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowPredictionPopup(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                border: 'none',
+                background: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+            >
+              ×
+            </button>
+            <h3 style={{ marginTop: '0', marginBottom: '15px', fontSize: '16px' }}>
+              Predict stakeholder interactions
+            </h3>
+            
+            <div style={{ marginBottom: '15px' }}>
+              <h4 style={{ fontSize: '13px', marginBottom: '8px', fontWeight: 'bold' }}>
+                Selected stakeholder-attribute pairs:
+              </h4>
+              <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
+                <div style={{ marginBottom: '4px' }}>• Rider 1: request_time</div>
+                <div style={{ marginBottom: '4px' }}>• Rider 1: pickup_location</div>
+                <div style={{ marginBottom: '4px' }}>• Rider 2: pickup_location</div>
+                <div style={{ marginBottom: '4px' }}>• Rider 2: request_time</div>
+                <div style={{ marginBottom: '4px' }}>• Vehicle 1: car_cur_location</div>
+              </div>
+            </div>
+            
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                Your prediction:
+              </label>
+              <textarea
+                value={predictionText}
+                onChange={(e) => setPredictionText(e.target.value)}
+                placeholder="Describe how you think these stakeholders will interact..."
+                style={{
+                  width: '100%',
+                  minHeight: '80px',
+                  padding: '8px',
+                  fontSize: '12px',
+                  border: '1px solid #ccc',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            
+            <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                onClick={() => setShowPredictionPopup(false)}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  border: '1px solid #ccc',
+                  backgroundColor: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  console.log('Prediction:', predictionText);
+                  setShowPredictionPopup(false);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  border: 'none',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {showInstructions && (
         <div
