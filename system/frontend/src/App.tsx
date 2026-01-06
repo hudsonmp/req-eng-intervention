@@ -22,29 +22,103 @@ function App() {
   const [expectedOutput, setExpectedOutput] = useState('');
   const [interactions, setInteractions] = useState('');
   const [editableValues, setEditableValues] = useState({
-    r1_request: 'T+0 min',
-    r1_pickup: '(14, 12)',
-    r2_request: 'T+0 min',
-    r2_pickup: '(15, 15)',
-    r2_destination: '(14, 12) = R1 pickup',
-    car_location: '(5, 4)',
-    car_assigned: 'Assigned to R1'
+    r1_request: '',
+    r1_pickup: '',
+    r2_request: '',
+    r2_pickup: '',
+    r2_destination: '',
+    car_location: '',
+    car_assigned: ''
   });
-  const [testOutput, setTestOutput] = useState('The output made sense in this case. rider_1 was assigned the car first because it was in batch one and is closer to the car, satisfying our program constraints.');
-  const [testCaseA, setTestCaseA] = useState('I think the bug is that the vehicle will be matched with rider_1, but since rider_2 is within batch period and on the way, it should match with rider_2 first.');
-  const [testCaseB, setTestCaseB] = useState('The bug is likely in how you calculate distances. The vehicle might be picking the rider with the shorter straight-line distance rather than considering the route.');
-  const [testCaseC, setTestCaseC] = useState('I think the issue is that your batch timing isn\'t working correctly, so rider_2\'s request isn\'t being considered in the same batch as rider_1.');
+  const [testOutput, setTestOutput] = useState('');
+  const [testCaseA, setTestCaseA] = useState('');
+  const [testCaseB, setTestCaseB] = useState('');
+  const [testCaseC, setTestCaseC] = useState('');
   
-  interface TestCase {
+  interface InteractionTest {
     id: number;
-    category: string;
+    stakeholder: string;
     attribute: string;
     value: string;
+    error: string;
   }
   
-  const [testCases, setTestCases] = useState<TestCase[]>([
-    { id: 1, category: 'rider_1', attribute: 'request_time', value: 'T+0' }
+  const [interactionTests, setInteractionTests] = useState<InteractionTest[]>([
+    { id: 1, stakeholder: '', attribute: '', value: '', error: '' }
   ]);
+  
+  // Helper to check if attribute is a location type
+  const isLocationAttribute = (attr: string) => 
+    ['pickup_location', 'destination', 'car_cur_location'].includes(attr);
+  
+  // Helper to check if attribute is a time type
+  const isTimeAttribute = (attr: string) => 
+    ['request_time', 'eta_car', 'eta_destination'].includes(attr);
+  
+  // Validate value based on attribute type
+  const validateValue = (attribute: string, value: string): string => {
+    if (!value) return '';
+    
+    if (isLocationAttribute(attribute)) {
+      const match = value.match(/^\d+\s*,\s*\d+$/);
+      if (!match) return 'Format: x, y (e.g., 5, 10)';
+    } else if (isTimeAttribute(attribute)) {
+      const match = value.match(/^\d+(\s*(min|mins|m))?$/i);
+      if (!match) return 'Format: number (e.g., 5 or 5 min)';
+    } else if (attribute === 'battery_level') {
+      const match = value.match(/^\d+$/);
+      if (!match || parseInt(value) > 100) return 'Format: 0-100';
+    } else if (attribute === 'fare') {
+      const match = value.match(/^\d+(\.\d{1,2})?$/);
+      if (!match) return 'Format: amount (e.g., 15.50)';
+    }
+    return '';
+  };
+  
+  // Get formatted value for display
+  const getFormattedValue = (attribute: string, value: string): string => {
+    if (!value) return '';
+    if (isLocationAttribute(attribute)) return `(${value})`;
+    if (isTimeAttribute(attribute)) return `T+${value}`;
+    if (attribute === 'battery_level') return `${value}%`;
+    if (attribute === 'fare') return `$${value}`;
+    return value;
+  };
+  
+  // Get stakeholders with location attributes for simulation display
+  const getSimulationEntities = () => {
+    const entities: { type: string; stakeholder: string; location: string; callouts: string[] }[] = [];
+    
+    interactionTests.filter(t => t.stakeholder && t.attribute && t.value && !t.error).forEach(test => {
+      const existing = entities.find(e => e.stakeholder === test.stakeholder);
+      
+      if (isLocationAttribute(test.attribute)) {
+        if (existing) {
+          existing.location = test.value;
+        } else {
+          entities.push({
+            type: test.stakeholder.startsWith('rider') ? 'rider' : 'vehicle',
+            stakeholder: test.stakeholder,
+            location: test.value,
+            callouts: []
+          });
+        }
+      } else {
+        if (existing) {
+          existing.callouts.push(`${test.attribute}: ${getFormattedValue(test.attribute, test.value)}`);
+        } else {
+          entities.push({
+            type: test.stakeholder.startsWith('rider') ? 'rider' : 'vehicle',
+            stakeholder: test.stakeholder,
+            location: '',
+            callouts: [`${test.attribute}: ${getFormattedValue(test.attribute, test.value)}`]
+          });
+        }
+      }
+    });
+    
+    return entities;
+  };
 
   useEffect(() => {
     // Load instructions.tex file
@@ -204,14 +278,14 @@ function App() {
           </h3>
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(20, 1fr)', 
-            gridTemplateRows: 'repeat(20, 1fr)',
+            gridTemplateColumns: 'repeat(25, 1fr)', 
+            gridTemplateRows: 'repeat(25, 1fr)',
             gap: '0px',
             width: 'fit-content',
             backgroundColor: '#f9f9f9',
             position: 'relative'
           }}>
-            {Array.from({ length: 400 }, (_, i) => (
+            {Array.from({ length: 625 }, (_, i) => (
               <div 
                 key={i} 
                 style={{ 
@@ -223,97 +297,84 @@ function App() {
                 }}
               />
             ))}
-            {/* Car icon with label */}
-            <img 
-              src="/icons/vehicle.svg" 
-              alt="car" 
+            {/* Dynamic entities from interaction tests */}
+            {getSimulationEntities().map((entity, idx) => {
+              const isRider1 = entity.stakeholder === 'rider_1';
+              const isRider2 = entity.stakeholder === 'rider_2';
+              const isVehicle1 = entity.stakeholder === 'vehicle_1';
+              const isVehicle2 = entity.stakeholder === 'vehicle_2';
+              
+              const color = (isRider1 || isVehicle1) ? 'blue' : 'red';
+              const borderColor = color === 'blue' ? '#0066cc' : '#cc0000';
+              const filter = color === 'blue' 
+                ? 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
+                : 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)';
+              
+              const icon = entity.type === 'rider' ? '/icons/rider.svg' : '/icons/vehicle.svg';
+              const label = entity.stakeholder.replace('_', ' ').replace('rider', 'R').replace('vehicle', 'V').replace(' ', '');
+              
+              // If no location, place at a default position based on stakeholder
+              const defaultPositions: Record<string, string> = {
+                'rider_1': '5, 5',
+                'rider_2': '15, 5',
+                'vehicle_1': '10, 15',
+                'vehicle_2': '10, 10'
+              };
+              const location = entity.location || defaultPositions[entity.stakeholder] || '10, 10';
+              const position = getIconPosition(`(${location})`);
+              
+              return (
+                <React.Fragment key={entity.stakeholder}>
+                  <img 
+                    src={icon} 
+                    alt={entity.stakeholder} 
               style={{ 
                 position: 'absolute',
                 width: '20px',
                 height: '20px',
-                ...getIconPosition(editableValues.car_location),
-                filter: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
+                      ...position,
+                      filter,
+                      opacity: entity.location ? 1 : 0.5
               }} 
             />
             <div style={{
               position: 'absolute',
-              top: `calc(${getIconPosition(editableValues.car_location).top} + 22px)`,
-              left: `calc(${getIconPosition(editableValues.car_location).left} - 5px)`,
-              fontSize: '10px',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    top: `calc(${position.top} + 22px)`,
+                    left: `calc(${position.left} - 10px)`,
+                    fontSize: '9px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
               padding: '2px 4px',
-              border: '1px solid #ccc',
-              whiteSpace: 'nowrap'
-            }}>
-              Car: {editableValues.car_location}
+                    border: `1px solid ${borderColor}`,
+                    whiteSpace: 'nowrap',
+                    maxWidth: '80px'
+                  }}>
+                    <div style={{ fontWeight: 'bold' }}>{label}</div>
+                    {entity.location && <div>({entity.location})</div>}
+                    {entity.callouts.map((callout, i) => (
+                      <div key={i} style={{ fontSize: '8px', color: '#666' }}>{callout}</div>
+                    ))}
             </div>
-            
-            {/* Rider 1 icon with label */}
-            <img 
-              src="/icons/rider.svg" 
-              alt="rider1" 
-              style={{ 
-                position: 'absolute',
-                width: '20px',
-                height: '20px',
-                ...getIconPosition(editableValues.r1_pickup),
-                filter: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
-              }} 
-            />
+                </React.Fragment>
+              );
+            })}
+            {getSimulationEntities().length === 0 && (
             <div style={{
               position: 'absolute',
-              top: `calc(${getIconPosition(editableValues.r1_pickup).top} + 22px)`,
-              left: `calc(${getIconPosition(editableValues.r1_pickup).left} - 10px)`,
-              fontSize: '10px',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              padding: '2px 4px',
-              border: '1px solid #0066cc',
-              whiteSpace: 'nowrap'
-            }}>
-              R1: {editableValues.r1_pickup}<br/>{editableValues.r1_request}
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                fontSize: '11px',
+                color: '#999',
+                textAlign: 'center'
+              }}>
+                Add interaction tests<br/>to see simulation
             </div>
-            
-            {/* Rider 2 icon with label */}
-            <img 
-              src="/icons/rider.svg" 
-              alt="rider2" 
-              style={{ 
-                position: 'absolute',
-                width: '20px',
-                height: '20px',
-                ...getIconPosition(editableValues.r2_pickup),
-                filter: 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)'
-              }} 
-            />
-            <div style={{
-              position: 'absolute',
-              top: `calc(${getIconPosition(editableValues.r2_pickup).top} + 22px)`,
-              left: `calc(${getIconPosition(editableValues.r2_pickup).left} - 10px)`,
-              fontSize: '10px',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              padding: '2px 4px',
-              border: '1px solid #cc0000',
-              whiteSpace: 'nowrap'
-            }}>
-              R2: {editableValues.r2_pickup}<br/>{editableValues.r2_request}
-            </div>
+            )}
           </div>
           
           {/* Input Fields Section */}
           <div style={{ marginTop: '15px', marginRight: '20px' }}>
             <div style={{ padding: '10px', border: '1px solid #ccc', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
-              <h4 style={{ marginTop: '0', marginBottom: '10px', fontSize: '13px', fontWeight: 'bold' }}>
-                Stakeholder-Attribute-Value Pairs:
-              </h4>
-              <div style={{ fontSize: '11px', marginBottom: '10px', lineHeight: '1.5' }}>
-                <div>• rider_1: request_time = T+0</div>
-                <div>• rider_2: request_time = T+4</div>
-                <div>• rider_1: pickup_location = (15, 15)</div>
-                <div>• rider_2: pickup_location = (14, 12)</div>
-                <div>• rider_2: destination = (15, 15)</div>
-                <div>• vehicle_current_location = (5, 4)</div>
-              </div>
-            
               <div style={{ marginBottom: '10px' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
                   Expected Output:
@@ -400,291 +461,90 @@ function App() {
             <span>Talk to TA Assistant Oracle</span>
           </button>
           
-          <h3 style={{ marginTop: '0', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
-            Select stakeholder-attribute pairs
-          </h3>
           
-          {/* Mock selection 1: rider_1 request_time */}
-          <div style={{ marginBottom: '10px' }}>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
-              <img 
-                src="/icons/rider.svg" 
-                alt="icon" 
-                style={{ 
-                  width: '40px', 
-                  height: '40px', 
-                  filter: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
-                }} 
-              />
-              <div style={{ maxWidth: '200px' }}>
-                <div style={{ 
-                  padding: '4px 6px', 
-                  fontSize: '13px',
-                  border: '1px solid #ccc',
-                  backgroundColor: '#f0f0f0',
-                  color: '#000000'
-                }}>
-                  Rider 1
-                </div>
-                <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
-                    Attribute:
-                  </label>
-                  <div style={{
-                    flex: 1,
-                    padding: '4px 6px',
-                    fontSize: '13px',
-                    border: '1px solid #ccc',
-                    backgroundColor: '#f0f0f0',
-                    color: '#000000'
-                  }}>
-                    request_time
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Mock selection 2: rider_1 pickup_location */}
-          <div style={{ marginBottom: '10px' }}>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
-                  <img 
-                src="/icons/rider.svg" 
-                    alt="icon" 
-                    style={{ 
-                      width: '40px', 
-                      height: '40px', 
-                  filter: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
-                    }} 
-                  />
-                <div style={{ maxWidth: '200px' }}>
-                <div style={{ 
-                      padding: '4px 6px', 
-                      fontSize: '13px',
-                      border: '1px solid #ccc',
-                  backgroundColor: '#f0f0f0',
-                      color: '#000000'
-                }}>
-                  Rider 1
-                </div>
-                    <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
-                        Attribute:
-                      </label>
-                  <div style={{
-                          flex: 1,
-                          padding: '4px 6px',
-                          fontSize: '13px',
-                          border: '1px solid #ccc',
-                    backgroundColor: '#f0f0f0',
-                          color: '#000000'
-                  }}>
-                    pickup_location
-                    </div>
-                </div>
-              </div>
-            </div>
-                </div>
-                
-          {/* Mock selection 3: rider_2 pickup_location */}
-          <div style={{ marginBottom: '10px' }}>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
-              <img 
-                src="/icons/rider.svg" 
-                alt="icon" 
-                    style={{
-                  width: '40px', 
-                  height: '40px', 
-                  filter: 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)'
-                }} 
-              />
-              <div style={{ maxWidth: '200px' }}>
-                <div style={{ 
-                  padding: '4px 6px', 
-                  fontSize: '13px',
-                  border: '1px solid #ccc',
-                  backgroundColor: '#f0f0f0',
-                  color: '#000000'
-                }}>
-                  Rider 2
-                </div>
-                <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
-                    Attribute:
-                  </label>
-                  <div style={{
-                    flex: 1,
-                    padding: '4px 6px',
-                    fontSize: '13px',
-                      border: '1px solid #ccc',
-                    backgroundColor: '#f0f0f0',
-                    color: '#000000'
-                  }}>
-                    pickup_location
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Mock selection 4: rider_2 request_time */}
-          <div style={{ marginBottom: '10px' }}>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
-              <img 
-                src="/icons/rider.svg" 
-                alt="icon" 
-                style={{ 
-                  width: '40px', 
-                  height: '40px', 
-                  filter: 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)'
-                }} 
-              />
-              <div style={{ maxWidth: '200px' }}>
-                <div style={{ 
-                  padding: '4px 6px', 
-                  fontSize: '13px',
-                  border: '1px solid #ccc',
-                  backgroundColor: '#f0f0f0',
-                  color: '#000000'
-                }}>
-                  Rider 2
-                </div>
-                <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
-                    Attribute:
-                  </label>
-                  <div style={{
-                    flex: 1,
-                    padding: '4px 6px',
-                    fontSize: '13px',
-                    border: '1px solid #ccc',
-                    backgroundColor: '#f0f0f0',
-                    color: '#000000'
-                  }}>
-                    request_time
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Mock selection 5: car_1 car_cur_location */}
-          <div style={{ marginBottom: '10px' }}>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
-              <img 
-                src="/icons/vehicle.svg" 
-                alt="icon" 
-                    style={{
-                  width: '40px', 
-                  height: '40px', 
-                  filter: 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
-                }} 
-              />
-              <div style={{ maxWidth: '200px' }}>
-                <div style={{ 
-                  padding: '4px 6px', 
-                  fontSize: '13px',
-                  border: '1px solid #ccc',
-                  backgroundColor: '#f0f0f0',
-                  color: '#000000'
-                }}>
-                  Vehicle 1
-                </div>
-                <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <label style={{ fontSize: '13px', color: '#000000', whiteSpace: 'nowrap' }}>
-                    Attribute:
-                  </label>
-                  <div style={{
-                    flex: 1,
-                    padding: '4px 6px',
-                    fontSize: '13px',
-                      border: '1px solid #ccc',
-                    backgroundColor: '#f0f0f0',
-                    color: '#000000'
-                  }}>
-                    car_cur_location
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Test Case Section - moved from container-3 */}
-          <div style={{ marginTop: '15px' }}>
             <h3 style={{ marginTop: '0', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
-              Select test case:
+            Select Interaction Test
             </h3>
             
-            {/* Test Case Items */}
-            {testCases.map((testCase) => {
-              const getIconAndColor = (category: string) => {
-                if (category.startsWith('rider_1')) return { icon: '/icons/rider.svg', color: 'blue' };
-                if (category.startsWith('rider_2')) return { icon: '/icons/rider.svg', color: 'red' };
-                if (category.startsWith('vehicle_1')) return { icon: '/icons/vehicle.svg', color: 'blue' };
-                if (category.startsWith('vehicle_2')) return { icon: '/icons/vehicle.svg', color: 'red' };
-                if (category === 'system') return { icon: '/icons/system.svg', color: 'black' };
+          {/* Interaction Test Items */}
+          {interactionTests.map((test) => {
+            const getIconAndColor = (stakeholder: string) => {
+              if (stakeholder === 'rider_1') return { icon: '/icons/rider.svg', color: 'blue' };
+              if (stakeholder === 'rider_2') return { icon: '/icons/rider.svg', color: 'red' };
+              if (stakeholder === 'vehicle_1') return { icon: '/icons/vehicle.svg', color: 'blue' };
+              if (stakeholder === 'vehicle_2') return { icon: '/icons/vehicle.svg', color: 'red' };
                 return { icon: '/icons/rider.svg', color: 'blue' };
               };
               
-              const iconData = getIconAndColor(testCase.category);
+            const iconData = getIconAndColor(test.stakeholder);
+            
+            // Get placeholder and prefix based on attribute
+            const getValueInput = (attribute: string) => {
+              if (isLocationAttribute(attribute)) {
+                return { prefix: '(', suffix: ')', placeholder: 'x, y' };
+              } else if (isTimeAttribute(attribute)) {
+                return { prefix: 'T+', suffix: '', placeholder: '0' };
+              } else if (attribute === 'battery_level') {
+                return { prefix: '', suffix: '%', placeholder: '0-100' };
+              } else if (attribute === 'fare') {
+                return { prefix: '$', suffix: '', placeholder: '0.00' };
+              }
+              return { prefix: '', suffix: '', placeholder: 'value' };
+            };
+            
+            const valueInput = getValueInput(test.attribute);
               
               return (
-                <div key={testCase.id} style={{ 
+              <div key={test.id} style={{ 
                   marginBottom: '10px',
                   padding: '10px',
                   backgroundColor: 'white',
-                  borderRadius: '8px',
-                  border: '1px solid #e0e0e0'
+                border: test.error ? '1px solid #f44336' : '1px solid #e0e0e0'
                 }}>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <input 
-                      type="checkbox" 
-                      checked 
-                      onChange={() => setTestCases(testCases.filter(tc => tc.id !== testCase.id))}
-                      style={{ marginTop: '8px' }}
-                    />
                     <img 
                       src={iconData.icon} 
                       alt="icon" 
                       style={{ 
-                        width: '28px', 
-                        height: '28px', 
-                        filter: iconData.color === 'blue' ? 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)' :
-                                iconData.color === 'red' ? 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)' :
-                                'none'
+                      width: '32px', 
+                      height: '32px', 
+                      filter: iconData.color === 'blue' 
+                        ? 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)'
+                        : 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)',
+                      opacity: test.stakeholder ? 1 : 0.3
                       }} 
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <select
-                        value={testCase.category}
-                        onChange={(e) => setTestCases(testCases.map(tc => 
-                          tc.id === testCase.id ? { ...tc, category: e.target.value } : tc
+                      value={test.stakeholder}
+                      onChange={(e) => setInteractionTests(interactionTests.map(t => 
+                        t.id === test.id ? { ...t, stakeholder: e.target.value, error: '' } : t
                         ))}
                         style={{ 
                           width: '100%',
                           padding: '4px 6px', 
-                          fontSize: '10px',
+                        fontSize: '11px',
                           border: '1px solid #ccc',
                           backgroundColor: 'white',
                           color: '#000000',
-                          marginBottom: '4px',
-                          borderRadius: '4px'
+                        marginBottom: '4px'
                         }}
                       >
+                      <option value="">Select Stakeholder</option>
                         <option value="rider_1">Rider 1</option>
                         <option value="rider_2">Rider 2</option>
                         <option value="vehicle_1">Vehicle 1</option>
                         <option value="vehicle_2">Vehicle 2</option>
-                        <option value="system">System</option>
                       </select>
+                    
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
                         <label style={{ fontSize: '10px', color: '#666', whiteSpace: 'nowrap' }}>
                           Attr:
                         </label>
                         <select
-                          value={testCase.attribute}
-                          onChange={(e) => setTestCases(testCases.map(tc => 
-                            tc.id === testCase.id ? { ...tc, attribute: e.target.value } : tc
+                        value={test.attribute}
+                        onChange={(e) => setInteractionTests(interactionTests.map(t => 
+                          t.id === test.id ? { ...t, attribute: e.target.value, value: '', error: '' } : t
                           ))}
                           style={{
                             flex: 1,
@@ -692,61 +552,103 @@ function App() {
                             fontSize: '10px',
                             border: '1px solid #ccc',
                             backgroundColor: 'white',
-                            color: '#000000',
-                            borderRadius: '4px'
+                          color: '#000000'
                           }}
                         >
+                        <option value="">Select Attribute</option>
                           <option value="pickup_location">pickup_location</option>
                           <option value="destination">destination</option>
-                          <option value="fare">fare</option>
                           <option value="request_time">request_time</option>
                           <option value="eta_car">eta_car</option>
                           <option value="eta_destination">eta_destination</option>
-                          <option value="accessible">accessible</option>
-                          <option value="pickup_distance">pickup_distance</option>
-                          <option value="occupied">occupied</option>
-                          <option value="assigned_other">assigned_other</option>
                           <option value="car_cur_location">car_cur_location</option>
                           <option value="battery_level">battery_level</option>
+                        <option value="fare">fare</option>
                         </select>
                       </div>
+                    
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <label style={{ fontSize: '10px', color: '#666', whiteSpace: 'nowrap' }}>
                           Val:
                         </label>
+                      <div style={{ 
+                        flex: 1, 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        border: '1px solid #ccc',
+                        backgroundColor: test.attribute ? 'white' : '#f0f0f0'
+                      }}>
+                        {valueInput.prefix && (
+                          <span style={{ padding: '4px', fontSize: '10px', color: '#666', backgroundColor: '#f5f5f5' }}>
+                            {valueInput.prefix}
+                          </span>
+                        )}
                         <input
                           type="text"
-                          value={testCase.value}
-                          onChange={(e) => setTestCases(testCases.map(tc => 
-                            tc.id === testCase.id ? { ...tc, value: e.target.value } : tc
-                          ))}
+                          value={test.value}
+                          onChange={(e) => {
+                            const newValue = e.target.value;
+                            const error = validateValue(test.attribute, newValue);
+                            setInteractionTests(interactionTests.map(t => 
+                              t.id === test.id ? { ...t, value: newValue, error } : t
+                            ));
+                          }}
+                          disabled={!test.attribute}
+                          placeholder={test.attribute ? valueInput.placeholder : "Select attribute first"}
                           style={{
                             flex: 1,
-                            padding: '4px 6px',
+                            padding: '4px',
                             fontSize: '10px',
-                            border: '1px solid #ccc',
-                            backgroundColor: 'white',
-                            color: '#000000',
-                            borderRadius: '4px'
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            color: test.attribute ? '#000000' : '#999',
+                            cursor: test.attribute ? 'text' : 'not-allowed',
+                            outline: 'none'
                           }}
                         />
+                        {valueInput.suffix && (
+                          <span style={{ padding: '4px', fontSize: '10px', color: '#666', backgroundColor: '#f5f5f5' }}>
+                            {valueInput.suffix}
+                          </span>
+                        )}
                       </div>
+                      <button
+                        onClick={() => setInteractionTests(interactionTests.filter(t => t.id !== test.id))}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: '12px',
+                            border: '1px solid #ccc',
+                            backgroundColor: 'white',
+                          cursor: 'pointer',
+                          color: '#d32f2f'
+                          }}
+                      >
+                        ×
+                      </button>
+                      </div>
+                    
+                    {test.error && (
+                      <div style={{ fontSize: '9px', color: '#f44336', marginTop: '2px' }}>
+                        ⚠ {test.error}
+                      </div>
+                    )}
                     </div>
                   </div>
                 </div>
               );
             })}
             
-            {/* Add New Test Case Button */}
-            {testCases.length < 5 && (
+          {/* Add Interaction Test Button */}
+          {interactionTests.length < 10 && (
               <button
                 onClick={() => {
-                  const newId = testCases.length > 0 ? Math.max(...testCases.map(tc => tc.id)) + 1 : 1;
-                  setTestCases([...testCases, { 
+                const newId = interactionTests.length > 0 ? Math.max(...interactionTests.map(t => t.id)) + 1 : 1;
+                setInteractionTests([...interactionTests, { 
                     id: newId, 
-                    category: 'rider_1', 
-                    attribute: 'request_time', 
-                    value: '' 
+                  stakeholder: '', 
+                  attribute: '', 
+                  value: '',
+                  error: ''
                   }]);
                 }}
                 style={{
@@ -757,14 +659,12 @@ function App() {
                   backgroundColor: 'white',
                   cursor: 'pointer',
                   color: '#666',
-                  borderRadius: '8px',
                   fontWeight: '500'
                 }}
               >
-                + Add Test Case
+              + Add Interaction Test
               </button>
             )}
-          </div>
 
         </div>
       </div>
@@ -795,7 +695,7 @@ function App() {
               Office Hour!
             </h3>
             <div style={{ fontSize: '10px', color: '#666' }}>
-              First-year • CS 101 • Rideshare domain exp
+              Alex • Third-Year • CS1 student
             </div>
           </div>
         </div>
@@ -810,203 +710,7 @@ function App() {
           gap: '8px',
           backgroundColor: '#f5f5f5'
         }}>
-          {/* Message 1: Student lists test cases */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              backgroundColor: '#ff9800',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '14px',
-              flexShrink: 0
-            }}>
-              👨‍💻
-            </div>
-            <div style={{ flex: 1, maxWidth: '80%' }}>
-              <div style={{
-                padding: '8px 10px',
-                backgroundColor: 'white',
-                borderRadius: '10px',
-                fontSize: '11px',
-                lineHeight: '1.4',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-              }}>
-                Here are my test cases:
-                <br/>• rider_1: request_time = T+0, pickup_location = (14, 12)
-                <br/>• rider_2: request_time = T+7, pickup_location = (15, 15)
-                <br/>• car_1: car_cur_location = (5, 4)
-                <br/>• batch_time = 5 mins
-              </div>
-            </div>
-          </div>
-
-          {/* Message 2: Student says code passed but has bug */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              backgroundColor: '#ff9800',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '14px',
-              flexShrink: 0
-            }}>
-              👨‍💻
-            </div>
-            <div style={{ flex: 1, maxWidth: '80%' }}>
-              <div style={{
-                padding: '8px 10px',
-                backgroundColor: 'white',
-                borderRadius: '10px',
-                fontSize: '11px',
-                lineHeight: '1.4',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-              }}>
-                My code passed all of these tests, but there's still a bug. Can you help me write a test to find the bug?
-              </div>
-            </div>
-          </div>
-
-          {/* Message 3: TA provides test case */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              backgroundColor: '#4caf50',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '11px',
-              flexShrink: 0,
-              color: 'white',
-              fontWeight: 'bold'
-            }}>
-              TA
-            </div>
-            <div style={{ flex: 1, maxWidth: '80%' }}>
-              <div style={{
-                padding: '8px 10px',
-                backgroundColor: '#e8f5e9',
-                borderRadius: '10px',
-                fontSize: '11px',
-                lineHeight: '1.4',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-              }}>
-                Here is a good interaction test:
-                <br/>• rider_1: request_time = T+0
-                <br/>• rider_2: request_time = T+4
-                <br/>• rider_1: pickup_location = (15, 15)
-                <br/>• rider_2: pickup_location = (14, 12)
-                <br/>• rider_2: destination = (15, 15)
-                <br/>• vehicle_current_location = (5, 4)
-              </div>
-            </div>
-          </div>
-
-          {/* Message 4: Student asks for explanation */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              backgroundColor: '#ff9800',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '14px',
-              flexShrink: 0
-            }}>
-              👨‍💻
-            </div>
-            <div style={{ flex: 1, maxWidth: '80%' }}>
-              <div style={{
-                padding: '8px 10px',
-                backgroundColor: 'white',
-                borderRadius: '10px',
-                fontSize: '11px',
-                lineHeight: '1.4',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-              }}>
-                Can you explain why? What do you think will happen vs. what should happen?
-              </div>
-            </div>
-          </div>
-
-          <div style={{ fontSize: '11px', color: '#333', fontWeight: 'bold', marginTop: '5px', marginBottom: '6px' }}>
-            Select a response:
-          </div>
-
-          {/* Response Text Options */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
-            <div
-              contentEditable
-              suppressContentEditableWarning
-              onBlur={(e) => setTestCaseA(e.currentTarget.textContent || '')}
-              style={{
-                padding: '8px 10px',
-                fontSize: '10px',
-                border: '2px solid #2196F3',
-                backgroundColor: '#E3F2FD',
-                color: '#000000',
-                cursor: 'pointer',
-                textAlign: 'left',
-                lineHeight: '1.3',
-                outline: 'none',
-                borderRadius: '6px',
-                transition: 'border-color 0.2s'
-              }}
-            >
-              {testCaseA}
-            </div>
-
-            <div
-              contentEditable
-              suppressContentEditableWarning
-              onBlur={(e) => setTestCaseB(e.currentTarget.textContent || '')}
-              style={{
-                padding: '8px 10px',
-                fontSize: '10px',
-                border: '2px solid #e0e0e0',
-                backgroundColor: 'white',
-                color: '#000000',
-                cursor: 'pointer',
-                textAlign: 'left',
-                lineHeight: '1.3',
-                outline: 'none',
-                borderRadius: '6px',
-                transition: 'border-color 0.2s'
-              }}
-            >
-              {testCaseB}
-            </div>
-
-            <div
-              contentEditable
-              suppressContentEditableWarning
-              onBlur={(e) => setTestCaseC(e.currentTarget.textContent || '')}
-              style={{
-                padding: '8px 10px',
-                fontSize: '10px',
-                border: '2px solid #e0e0e0',
-                backgroundColor: 'white',
-                color: '#000000',
-                cursor: 'pointer',
-                textAlign: 'left',
-                lineHeight: '1.3',
-                outline: 'none',
-                borderRadius: '6px',
-                transition: 'border-color 0.2s'
-              }}
-            >
-              {testCaseC}
-            </div>
-          </div>
+          {/* Chat messages will be rendered here from backend */}
         </div>
       </div>
       
@@ -1058,14 +762,30 @@ function App() {
             
             <div style={{ marginBottom: '15px' }}>
               <h4 style={{ fontSize: '13px', marginBottom: '8px', fontWeight: 'bold' }}>
-                Selected stakeholder-attribute pairs:
+                Selected interaction tests:
               </h4>
               <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
-                <div style={{ marginBottom: '4px' }}>• Rider 1: request_time</div>
-                <div style={{ marginBottom: '4px' }}>• Rider 1: pickup_location</div>
-                <div style={{ marginBottom: '4px' }}>• Rider 2: pickup_location</div>
-                <div style={{ marginBottom: '4px' }}>• Rider 2: request_time</div>
-                <div style={{ marginBottom: '4px' }}>• Vehicle 1: car_cur_location</div>
+                {interactionTests
+                  .filter(t => t.stakeholder && t.attribute)
+                  .map(t => {
+                    const formatName = (name: string) => {
+                      return name.split('_').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                      ).join(' ');
+                    };
+                    return (
+                      <div key={t.id} style={{ marginBottom: '4px' }}>
+                        • {formatName(t.stakeholder)}: {t.attribute}
+                        {t.value && !t.error && ` = ${getFormattedValue(t.attribute, t.value)}`}
+                      </div>
+                    );
+                  })
+                }
+                {interactionTests.filter(t => t.stakeholder && t.attribute).length === 0 && (
+                  <div style={{ color: '#999', fontStyle: 'italic' }}>
+                    No tests selected yet
+                  </div>
+                )}
               </div>
             </div>
             
