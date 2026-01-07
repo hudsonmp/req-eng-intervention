@@ -47,6 +47,7 @@ function App() {
   const [interactionTests, setInteractionTests] = useState<InteractionTest[]>([
     { id: 1, stakeholder: '', attribute: '', value: '', value2: '', error: '' }
   ]);
+  const [hasReceivedLLMMessage, setHasReceivedLLMMessage] = useState(false);
   const [showDistanceTool, setShowDistanceTool] = useState(false);
   const [distanceStakeholder1, setDistanceStakeholder1] = useState('');
   const [distanceStakeholder2, setDistanceStakeholder2] = useState('');
@@ -696,7 +697,7 @@ function App() {
                           t.id === test.id ? { ...t, value: e.target.value, error } : t
                         ));
                       }}
-                      disabled={!test.attribute}
+                      disabled={!hasReceivedLLMMessage || !test.attribute}
                       placeholder="x,y"
                       style={{ width: '40px', padding: '2px', fontSize: '9px', border: '1px solid #ccc', textAlign: 'center' }}
                     />
@@ -714,7 +715,7 @@ function App() {
                           t.id === test.id ? { ...t, value: e.target.value, error } : t
                         ));
                       }}
-                      disabled={!test.attribute}
+                      disabled={!hasReceivedLLMMessage || !test.attribute}
                       placeholder="0"
                       style={{ width: '30px', padding: '2px', fontSize: '9px', border: '1px solid #ccc', textAlign: 'center' }}
                         />
@@ -730,7 +731,7 @@ function App() {
                           t.id === test.id ? { ...t, value: e.target.value, error } : t
                         ));
                       }}
-                      disabled={!test.attribute}
+                      disabled={!hasReceivedLLMMessage || !test.attribute}
                       placeholder="0"
                       style={{ width: '30px', padding: '2px', fontSize: '9px', border: '1px solid #ccc', textAlign: 'center' }}
                     />
@@ -743,6 +744,7 @@ function App() {
                       onChange={(e) => setInteractionTests(interactionTests.map(t => 
                         t.id === test.id ? { ...t, value: e.target.value, value2: '' } : t
                       ))}
+                      disabled={!hasReceivedLLMMessage}
                       style={{ width: '50px', padding: '2px', fontSize: '9px', border: '1px solid #ccc' }}
                     >
                       <option value="">--</option>
@@ -756,6 +758,7 @@ function App() {
                         onChange={(e) => setInteractionTests(interactionTests.map(t => 
                           t.id === test.id ? { ...t, value2: e.target.value } : t
                         ))}
+                        disabled={!hasReceivedLLMMessage}
                         style={{ width: '50px', padding: '2px', fontSize: '9px', border: '1px solid #ccc' }}
                       >
                         <option value="">rider?</option>
@@ -777,6 +780,7 @@ function App() {
                           onChange={(e) => setInteractionTests(interactionTests.map(t => 
                             t.id === test.id ? { ...t, value2: e.target.value } : t
                           ))}
+                          disabled={!hasReceivedLLMMessage}
                           placeholder="x,y"
                           style={{ width: '35px', padding: '2px', fontSize: '9px', border: '1px solid #ccc', textAlign: 'center' }}
                         />
@@ -791,7 +795,7 @@ function App() {
                     onChange={(e) => setInteractionTests(interactionTests.map(t => 
                       t.id === test.id ? { ...t, value: e.target.value } : t
                     ))}
-                    disabled={!test.attribute}
+                    disabled={!hasReceivedLLMMessage || !test.attribute}
                     placeholder="val"
                     style={{ width: '50px', padding: '2px', fontSize: '9px', border: '1px solid #ccc' }}
                   />
@@ -828,6 +832,24 @@ function App() {
               + Add Test
               </button>
             )}
+
+          {/* Begin Helping Student Button */}
+          <button
+            onClick={() => console.log('Begin helping student')}
+            style={{
+              width: '100%',
+              marginTop: '10px',
+              padding: '10px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              border: '1px solid #ccc',
+              backgroundColor: '#007bff',
+              color: 'white',
+              cursor: 'pointer'
+            }}
+          >
+            BEGIN HELPING STUDENT
+          </button>
 
         </div>
       </div>
