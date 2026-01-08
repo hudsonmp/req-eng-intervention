@@ -75,17 +75,13 @@ function Assessment() {
   // What-if table state
   interface WhatIfRow {
     id: number;
-    viewpoint: string;
-    scenario: string;
-    expectedBehavior: string;
-    dataRequired: string;
-    conflict: string;
-    resolution: string;
+    situation: string;
+    solution: string;
   }
   const [whatIfRows, setWhatIfRows] = useState<WhatIfRow[]>([
-    { id: 1, viewpoint: '', scenario: '', expectedBehavior: '', dataRequired: '', conflict: '', resolution: '' },
-    { id: 2, viewpoint: '', scenario: '', expectedBehavior: '', dataRequired: '', conflict: '', resolution: '' },
-    { id: 3, viewpoint: '', scenario: '', expectedBehavior: '', dataRequired: '', conflict: '', resolution: '' }
+    { id: 1, situation: '', solution: '' },
+    { id: 2, situation: '', solution: '' },
+    { id: 3, situation: '', solution: '' }
   ]);
   const [expandedCell, setExpandedCell] = useState<{rowId: number, field: string} | null>(null);
   
@@ -154,7 +150,7 @@ function Assessment() {
 
   const addWhatIfRow = () => {
     const newId = Math.max(...whatIfRows.map(r => r.id)) + 1;
-    setWhatIfRows([...whatIfRows, { id: newId, viewpoint: '', scenario: '', expectedBehavior: '', dataRequired: '', conflict: '', resolution: '' }]);
+    setWhatIfRows([...whatIfRows, { id: newId, situation: '', solution: '' }]);
   };
 
   const removeWhatIfRow = (id: number) => {
@@ -373,80 +369,43 @@ function Assessment() {
         
         <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: '#333' }}>Second Part of the Interview</h2>
         <p style={{ margin: '0 0 20px 0', fontSize: '14px', color: '#666' }}>
-          Think about different scenarios involving restaurant owners and diners. Fill in the table below.
+          Think about edge cases and failure scenarios. What could break the system?
         </p>
         
-        {/* Spreadsheet-like table */}
+        {/* Two-column table */}
         <div style={{ flex: 1, overflow: 'auto', background: '#fff', border: '1px solid #e0e0e0' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', tableLayout: 'fixed' }}>
             <thead>
               <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #e0e0e0' }}>
-                <th style={{ padding: '10px', borderRight: '1px solid #e0e0e0', width: '30px' }}></th>
-                <th style={{ padding: '10px', borderRight: '1px solid #e0e0e0', width: '140px', textAlign: 'left' }}>Viewpoint</th>
-                <th style={{ padding: '10px', borderRight: '1px solid #e0e0e0', width: '180px', textAlign: 'left' }}>Scenario</th>
-                <th style={{ padding: '10px', borderRight: '1px solid #e0e0e0', textAlign: 'left' }}>Expected Behavior</th>
-                <th style={{ padding: '10px', borderRight: '1px solid #e0e0e0', width: '160px', textAlign: 'left' }}>Data Required</th>
-                <th style={{ padding: '10px', borderRight: '1px solid #e0e0e0', textAlign: 'left' }}>Conflict</th>
-                <th style={{ padding: '10px', textAlign: 'left' }}>Resolution</th>
-              </tr>
-              <tr style={{ background: '#fafafa', borderBottom: '1px solid #e0e0e0', color: '#999', fontSize: '11px', fontStyle: 'italic' }}>
-                <th></th>
-                <th style={{ padding: '6px 10px', borderRight: '1px solid #e0e0e0', fontWeight: 'normal' }}>(select)</th>
-                <th style={{ padding: '6px 10px', borderRight: '1px solid #e0e0e0', fontWeight: 'normal' }}>What does the viewpoint do?</th>
-                <th style={{ padding: '6px 10px', borderRight: '1px solid #e0e0e0', fontWeight: 'normal' }}>What should happen?</th>
-                <th style={{ padding: '6px 10px', borderRight: '1px solid #e0e0e0', fontWeight: 'normal' }}>What must be stored?</th>
-                <th style={{ padding: '6px 10px', borderRight: '1px solid #e0e0e0', fontWeight: 'normal' }}>How do needs conflict?</th>
-                <th style={{ padding: '6px 10px', fontWeight: 'normal' }}>How to resolve?</th>
+                <th style={{ padding: '12px', borderRight: '1px solid #e0e0e0', width: '30px' }}>#</th>
+                <th style={{ padding: '12px', borderRight: '1px solid #e0e0e0', width: '50%', textAlign: 'left' }}>What is a situation that could break the system?</th>
+                <th style={{ padding: '12px', textAlign: 'left' }}>Solution: How should the requirement fix this?</th>
               </tr>
             </thead>
             <tbody>
               {whatIfRows.map((row, idx) => (
                 <tr key={row.id} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                  <td style={{ padding: '8px', borderRight: '1px solid #e0e0e0', textAlign: 'center', color: '#999' }}>
+                  <td style={{ padding: '8px', borderRight: '1px solid #e0e0e0', textAlign: 'center', color: '#999', verticalAlign: 'top' }}>
                     {idx + 1}
                     <br />
                     <button onClick={() => removeWhatIfRow(row.id)} style={{ border: 'none', background: 'none', color: '#f44336', cursor: 'pointer', fontSize: '14px' }}>×</button>
                   </td>
-                  <td style={{ padding: '4px', borderRight: '1px solid #e0e0e0' }}>
-                    <select
-                      value={row.viewpoint}
-                      onChange={(e) => updateWhatIfRow(row.id, 'viewpoint', e.target.value)}
-                      style={{ width: '100%', padding: '8px', border: '1px solid #ccc', fontSize: '13px' }}
-                    >
-                      <option value="">—</option>
-                      <option value="restaurant_owner">Restaurant Owner</option>
-                      <option value="diner">Diner</option>
-                    </select>
+                  <td style={{ padding: '4px', borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
+                    <textarea
+                      value={row.situation}
+                      onChange={(e) => updateWhatIfRow(row.id, 'situation', e.target.value)}
+                      style={{ width: '100%', minHeight: '120px', padding: '10px', border: '1px solid #ccc', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box' }}
+                      placeholder="Describe a scenario, edge case, or user action that could cause problems..."
+                    />
                   </td>
-                  {(['scenario', 'expectedBehavior', 'dataRequired', 'conflict', 'resolution'] as const).map(field => (
-                    <td key={field} style={{ padding: '4px', borderRight: field !== 'resolution' ? '1px solid #e0e0e0' : 'none' }}>
-                      {expandedCell?.rowId === row.id && expandedCell?.field === field ? (
-                        <textarea
-                          autoFocus
-                          value={row[field]}
-                          onChange={(e) => updateWhatIfRow(row.id, field, e.target.value)}
-                          onBlur={() => setExpandedCell(null)}
-                          style={{ width: '100%', minHeight: '100px', padding: '8px', border: '1px solid #007bff', fontSize: '13px', resize: 'vertical' }}
-                          placeholder={field === 'expectedBehavior' ? 'System should...' : field === 'dataRequired' ? 'e.g., reservation ID, timestamp...' : field === 'conflict' ? 'Select viewpoint first' : field === 'resolution' ? 'Resolved by...' : ''}
-                        />
-                      ) : (
-                        <div
-                          onClick={() => setExpandedCell({ rowId: row.id, field })}
-                          style={{ 
-                            padding: '8px', 
-                            minHeight: '40px', 
-                            cursor: 'text', 
-                            background: row[field] ? '#fff' : '#fafafa',
-                            border: '1px solid transparent',
-                            fontSize: '13px',
-                            color: row[field] ? '#333' : '#999'
-                          }}
-                        >
-                          {row[field] || (field === 'expectedBehavior' ? 'System should...' : field === 'dataRequired' ? 'e.g., reservation ID, timestamp...' : field === 'conflict' ? 'Select viewpoint first' : field === 'resolution' ? 'Resolved by...' : '')}
-                        </div>
-                      )}
-                    </td>
-                  ))}
+                  <td style={{ padding: '4px', verticalAlign: 'top' }}>
+                    <textarea
+                      value={row.solution}
+                      onChange={(e) => updateWhatIfRow(row.id, 'solution', e.target.value)}
+                      style={{ width: '100%', minHeight: '120px', padding: '10px', border: '1px solid #ccc', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box' }}
+                      placeholder="What requirement or rule would prevent or handle this situation?"
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>

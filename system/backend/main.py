@@ -171,12 +171,8 @@ async def health():
 
 class WhatIfRow(BaseModel):
     id: int
-    viewpoint: str
-    scenario: str
-    expectedBehavior: str
-    dataRequired: str
-    conflict: str
-    resolution: str
+    situation: str
+    solution: str
 
 class WhatIfRequest(BaseModel):
     study_id: int
@@ -192,7 +188,7 @@ async def save_whatif(request: WhatIfRequest):
         for idx, row in enumerate(request.rows):
             # Save full row content to storage
             file_id = f"{request.study_id}.{pid}.{idx}"
-            content = f"Viewpoint: {row.viewpoint}\nScenario: {row.scenario}\nExpected: {row.expectedBehavior}\nData: {row.dataRequired}\nConflict: {row.conflict}\nResolution: {row.resolution}"
+            content = f"Situation: {row.situation}\nSolution: {row.solution}"
             
             try:
                 supabase.storage.from_("what-if").upload(
@@ -208,12 +204,8 @@ async def save_whatif(request: WhatIfRequest):
                 "study_id": request.study_id,
                 "participant_id": pid,
                 "row_index": idx,
-                "viewpoint": row.viewpoint if row.viewpoint else None,
-                "scenario": row.scenario,
-                "expected_behavior": row.expectedBehavior,
-                "data_required": row.dataRequired,
-                "conflict": row.conflict,
-                "resolution": row.resolution,
+                "situation": row.situation,
+                "solution": row.solution,
                 "file_id": file_id
             }).execute()
         
