@@ -48,6 +48,7 @@ function App() {
     { id: 1, stakeholder: '', attribute: '', value: '', value2: '', error: '' }
   ]);
   const [hasReceivedLLMMessage, setHasReceivedLLMMessage] = useState(false);
+  const [isExploratoryMode, setIsExploratoryMode] = useState(false);
   const [showDistanceTool, setShowDistanceTool] = useState(false);
   const [distanceStakeholder1, setDistanceStakeholder1] = useState('');
   const [distanceStakeholder2, setDistanceStakeholder2] = useState('');
@@ -356,9 +357,41 @@ function App() {
     <div className="app" style={{ padding: '20px' }}>
       <div className="container container-1">
         <div style={{ paddingTop: '10px' }}>
-          <h3 style={{ marginTop: '0', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
-            Rideshare Simulation
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ margin: '0', fontSize: '14px', color: '#000000' }}>
+              Rideshare Simulation
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px' }}>
+              <span style={{ color: !isExploratoryMode ? '#007bff' : '#999' }}>Testing</span>
+              <button
+                onClick={() => hasReceivedLLMMessage && setIsExploratoryMode(!isExploratoryMode)}
+                disabled={!hasReceivedLLMMessage}
+                style={{
+                  width: '28px',
+                  height: '14px',
+                  borderRadius: '7px',
+                  border: '1px solid #ccc',
+                  backgroundColor: isExploratoryMode ? '#007bff' : '#e0e0e0',
+                  cursor: hasReceivedLLMMessage ? 'pointer' : 'not-allowed',
+                  position: 'relative',
+                  padding: 0,
+                  opacity: hasReceivedLLMMessage ? 1 : 0.5
+                }}
+              >
+                <div style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: 'white',
+                  position: 'absolute',
+                  top: '1px',
+                  left: isExploratoryMode ? '15px' : '1px',
+                  transition: 'left 0.2s'
+                }} />
+              </button>
+              <span style={{ color: isExploratoryMode ? '#007bff' : '#999' }}>Exploratory</span>
+            </div>
+          </div>
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(25, 1fr)', 
@@ -535,12 +568,12 @@ function App() {
               
               <div style={{ marginBottom: '10px' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
-                  Interactions:
+                  Reasoning:
                 </label>
                 <textarea
                   value={interactions}
                   onChange={(e) => setInteractions(e.target.value)}
-                  placeholder="Describe interactions..."
+                  placeholder="Describe reasoning..."
                   style={{
                     width: '100%',
                     minHeight: '60px',
@@ -850,6 +883,26 @@ function App() {
           >
             BEGIN HELPING STUDENT
           </button>
+
+          {/* Test Student Code Button - appears after first message */}
+          {hasReceivedLLMMessage && (
+            <button
+              onClick={() => console.log('Test student code')}
+              style={{
+                width: '100%',
+                marginTop: '8px',
+                padding: '10px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                border: '1px solid #4caf50',
+                backgroundColor: '#4caf50',
+                color: 'white',
+                cursor: 'pointer'
+              }}
+            >
+              TEST STUDENT CODE
+            </button>
+          )}
 
         </div>
       </div>
