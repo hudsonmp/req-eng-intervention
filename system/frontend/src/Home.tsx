@@ -155,13 +155,13 @@ function Home() {
               fontWeight: 'bold',
               marginBottom: '8px' 
             }}>
-              Participant Name
+              Participant ID
             </label>
             <input
               type="text"
               value={participantName}
               onChange={(e) => setParticipantName(e.target.value)}
-              placeholder="e.g. A1, B2"
+              placeholder="e.g. 1, 2, 3"
               style={{
                 width: '100%',
                 padding: '10px',
