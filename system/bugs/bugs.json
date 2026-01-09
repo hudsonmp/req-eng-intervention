@@ -1,0 +1,226 @@
+{
+  "description": "Example edge cases for LLM reference. Use these as inspiration to generate contextually relevant bugs based on participant's stakeholder-attribute selections.",
+  "usage": "The LLM should analyze participant selections and generate a novel bug scenario inspired by these examples, not copy them directly.",
+  "edge_case_examples": [
+    {
+      "id": "same_request_time",
+      "entities": [
+        {"entity": "rider_1", "attribute": "request_time"},
+        {"entity": "rider_2", "attribute": "request_time"}
+      ],
+      "trigger": "Request times are identical",
+      "system_failure": "Queue system has no tiebreaker logic for simultaneous requests",
+      "edge_case": "Two riders request at exact same timestamp",
+      "requirement_violated": "Deterministic assignment ordering"
+    },
+    {
+      "id": "accessible_vehicle_conflict",
+      "entities": [
+        {"entity": "rider_1", "attribute": "accessible"},
+        {"entity": "vehicle_1", "attribute": "accessible"},
+        {"entity": "vehicle_1", "attribute": "assigned_other"}
+      ],
+      "trigger": "Accessible rider requests when only accessible vehicle is assigned to non-accessible rider",
+      "system_failure": "System doesn't reassign accessible vehicle from normal request to accessible request",
+      "edge_case": "Must unassign accessible vehicle from normal rider, reassign to accessible rider",
+      "requirement_violated": "Accessibility priority"
+    },
+    {
+      "id": "same_pickup_dropoff",
+      "entities": [
+        {"entity": "rider_1", "attribute": "pickup_location"},
+        {"entity": "rider_2", "attribute": "destination"}
+      ],
+      "trigger": "Rider 1's pickup equals Rider 2's destination",
+      "system_failure": "Missed optimization opportunity for sequential pickups",
+      "edge_case": "Same car should be assigned regardless of request time within threshold",
+      "requirement_violated": "Route optimization"
+    },
+    {
+      "id": "same_destination_merge",
+      "entities": [
+        {"entity": "rider_1", "attribute": "destination"},
+        {"entity": "rider_2", "attribute": "destination"}
+      ],
+      "trigger": "Destinations are identical",
+      "system_failure": "Requests sorted by destination incorrectly merged into single assignment",
+      "edge_case": "Two riders get combined into one assignment when carpool not enabled",
+      "requirement_violated": "Individual ride guarantee"
+    },
+    {
+      "id": "occupied_vehicle_availability",
+      "entities": [
+        {"entity": "vehicle_1", "attribute": "occupied"}
+      ],
+      "trigger": "All vehicles occupied but one near pickup will be available soon",
+      "system_failure": "Rider cancels because no car assigned, but occupied car could have been pre-assigned",
+      "edge_case": "Vehicle occupied=true but should still be assignable for future pickup",
+      "requirement_violated": "Predictive assignment"
+    },
+    {
+      "id": "pickup_distance_fifo_inefficiency",
+      "entities": [
+        {"entity": "vehicle_1", "attribute": "pickup_distance"},
+        {"entity": "rider_1", "attribute": "pickup_distance"},
+        {"entity": "rider_2", "attribute": "pickup_distance"}
+      ],
+      "trigger": "FIFO assignment ignores distance optimization",
+      "system_failure": "First-in-first-out ignores that farther car might be better for earlier request",
+      "edge_case": "Strict queue ordering produces suboptimal total distance",
+      "requirement_violated": "Distance minimization"
+    },
+    {
+      "id": "wait_time_occupied_check",
+      "entities": [
+        {"entity": "vehicle_1", "attribute": "occupied"},
+        {"entity": "rider_1", "attribute": "request_time"}
+      ],
+      "trigger": "Long wait time triggers emergency assignment without occupancy check",
+      "system_failure": "Hard rule: if wait > 15min assign closest car, but forgets to check if car is occupied",
+      "edge_case": "Current passengers disrupted/rerouted to satisfy wait time bug",
+      "requirement_violated": "Current passenger priority"
+    },
+    {
+      "id": "en_route_pickup_optimization",
+      "entities": [
+        {"entity": "rider_1", "attribute": "request_time"},
+        {"entity": "rider_1", "attribute": "pickup_location"},
+        {"entity": "rider_2", "attribute": "pickup_location"}
+      ],
+      "trigger": "Later request's pickup is on-route to earlier request",
+      "system_failure": "Strict request_time ordering ignores route optimization",
+      "edge_case": "Rider 2's pickup is on way to Rider 1, and Rider 2's dropoff is Rider 1's pickup",
+      "requirement_violated": "Route efficiency vs FIFO"
+    },
+    {
+      "id": "battery_destination_check",
+      "entities": [
+        {"entity": "rider_1", "attribute": "pickup_location"},
+        {"entity": "vehicle_1", "attribute": "pickup_distance"},
+        {"entity": "vehicle_1", "attribute": "battery_level"}
+      ],
+      "trigger": "Matched on distance but battery insufficient for full trip",
+      "system_failure": "Battery check only validates pickup distance, not pickup + ride distance",
+      "edge_case": "Vehicle can reach pickup but not final destination",
+      "requirement_violated": "Trip completion guarantee"
+    },
+    {
+      "id": "rider_offline_vehicle_stuck",
+      "entities": [
+        {"entity": "system", "attribute": "online"},
+        {"entity": "rider_1", "attribute": "request_time"},
+        {"entity": "rider_1", "attribute": "online"}
+      ],
+      "trigger": "Rider's phone dies after vehicle assigned",
+      "system_failure": "No timeout logic for unresponsive riders",
+      "edge_case": "All cars become assigned but unoccupied, effectively out of service",
+      "requirement_violated": "Vehicle availability recovery"
+    },
+    {
+      "id": "traffic_change_reassignment",
+      "entities": [
+        {"entity": "independent", "attribute": "traffic_delay"},
+        {"entity": "vehicle_1", "attribute": "eta_car"},
+        {"entity": "rider_1", "attribute": "pickup_location"}
+      ],
+      "trigger": "Traffic conditions change after assignment",
+      "system_failure": "No reassignment when farther car becomes faster due to traffic",
+      "edge_case": "Accident makes assigned car's route impossible, farther car now faster",
+      "requirement_violated": "Dynamic reassignment"
+    },
+    {
+      "id": "profit_vs_satisfaction",
+      "entities": [
+        {"entity": "company", "attribute": "predicted_profit"},
+        {"entity": "vehicle_1", "attribute": "distance_dropoff"},
+        {"entity": "vehicle_1", "attribute": "pickup_distance"}
+      ],
+      "trigger": "Short ride with long pickup distance yields negative profit",
+      "system_failure": "Rejecting unprofitable rides undermines customer satisfaction",
+      "edge_case": "Nearest car far away, ride is short, profit negative",
+      "requirement_violated": "Service availability vs profitability"
+    },
+    {
+      "id": "same_location_tiebreaker",
+      "entities": [
+        {"entity": "vehicle_1", "attribute": "pickup_distance"},
+        {"entity": "vehicle_2", "attribute": "pickup_distance"}
+      ],
+      "trigger": "Two vehicles at identical distance",
+      "system_failure": "No tiebreaker logic causes infinite loop or undefined behavior",
+      "edge_case": "Both cars unoccupied at same location, weighted equally",
+      "requirement_violated": "Deterministic assignment"
+    },
+    {
+      "id": "cancel_reassignment",
+      "entities": [
+        {"entity": "rider_1", "attribute": "cancels"},
+        {"entity": "vehicle_1", "attribute": "assigned_other"},
+        {"entity": "rider_2", "attribute": "pickup_distance"}
+      ],
+      "trigger": "Rider cancels while vehicle en route",
+      "system_failure": "Freed vehicle not reassigned to closer waiting rider",
+      "edge_case": "Vehicle 1 now closer to Rider 2 than Rider 2's assigned vehicle",
+      "requirement_violated": "Dynamic reassignment on cancellation"
+    },
+    {
+      "id": "outside_service_radius",
+      "entities": [
+        {"entity": "rider_1", "attribute": "pickup_location"},
+        {"entity": "independent", "attribute": "service_radius"}
+      ],
+      "trigger": "Pickup location outside service area",
+      "system_failure": "Request accepted but unable to complete",
+      "edge_case": "No validation of pickup against service boundaries",
+      "requirement_violated": "Service area enforcement"
+    },
+    {
+      "id": "occupied_eta_vs_distance",
+      "entities": [
+        {"entity": "rider_1", "attribute": "eta_car"},
+        {"entity": "vehicle_1", "attribute": "pickup_distance"},
+        {"entity": "vehicle_1", "attribute": "occupied"}
+      ],
+      "trigger": "Occupied vehicle has shorter future distance but longer ETA",
+      "system_failure": "Optimization ignores that occupied vehicle will be closer after current ride",
+      "edge_case": "Vehicle 1 maximizes profit post-dropoff but has higher current ETA",
+      "requirement_violated": "Future state optimization"
+    },
+    {
+      "id": "batch_cancel_reoptimization",
+      "entities": [
+        {"entity": "independent", "attribute": "batch"},
+        {"entity": "rider_1", "attribute": "pickup_location"},
+        {"entity": "vehicle_1", "attribute": "car_cur_location"}
+      ],
+      "trigger": "Cancellation in previous batch frees better-fit vehicle",
+      "system_failure": "No cross-batch reoptimization",
+      "edge_case": "Rider assigned in batch_1, but batch_0 cancel creates better match",
+      "requirement_violated": "Continuous optimization"
+    },
+    {
+      "id": "pickup_location_change",
+      "entities": [
+        {"entity": "rider_1", "attribute": "pickup_location"},
+        {"entity": "vehicle_1", "attribute": "car_cur_location"},
+        {"entity": "rider_1", "attribute": "pickup_location"}
+      ],
+      "trigger": "Rider changes pickup after vehicle assigned",
+      "system_failure": "No threshold for requiring new ride request",
+      "edge_case": "Maximum delta in pickup before graceful unassignment required",
+      "requirement_violated": "Assignment stability"
+    },
+    {
+      "id": "destination_change_cascade",
+      "entities": [
+        {"entity": "rider_1", "attribute": "destination"},
+        {"entity": "vehicle_1", "attribute": "occupied"},
+        {"entity": "vehicle_1", "attribute": "occupied_assigned_after"}
+      ],
+      "trigger": "In-ride destination change affects next assigned rider",
+      "system_failure": "Cascading reassignment not handled",
+      "edge_case": "Rider 1 changes destination mid-ride, but Rider 2 already assigned to Vehicle 1 for after Rider 1",
+      "requirement_violated": "Minimize ETA and pickup distance - following one requirement violates another"
+    }
+  ]
+}

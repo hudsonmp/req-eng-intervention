@@ -1,0 +1,12 @@
+{
+  "name": "intervention-scripts",
+  "version": "1.0.0",
+  "description": "Upload scripts for intervention study content",
+  "scripts": {
+    "upload": "node upload-content.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "dotenv": "^16.4.5"
+  }
+}
