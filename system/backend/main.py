@@ -1126,7 +1126,7 @@ async def switch_mode(study_id: int, participant_id: str, run_number: int, new_m
     try:
         pid = 0 if participant_id == "test" else int(participant_id)
         message_id = f"{study_id}.{pid}.{run_number}.mode_{new_mode}"
-        
+
         supabase.table("messages").insert({
             "study_id": study_id,
             "participant_id": pid,
@@ -1139,8 +1139,448 @@ async def switch_mode(study_id: int, participant_id: str, run_number: int, new_m
                 "run_number": run_number
             }
         }).execute()
-        
+
         return {"status": "ok", "mode": new_mode}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ============ TEST VISUALIZATION ENDPOINT ============
+
+# ============ PARTICIPANT EXPLORER ENDPOINTS ============
+
+@app.get("/participant-explorer")
+async def get_all_participants():
+    """Get all participants with summary data - only show participants with data"""
+    try:
+        from collections import defaultdict
+
+        # Only query participant_id from each table (much faster)
+        all_exploratory = supabase.table("exploratory").select("participant_id").execute()
+        all_messages = supabase.table("messages").select("participant_id").execute()
+        all_sa = supabase.table("stakeholder_attribute").select("participant_id").execute()
+        all_whatif = supabase.table("whatif").select("participant_id").execute()
+        all_dk = supabase.table("domain_knowledge").select("participant_id").execute()
+
+        # Count by participant_id
+        exp_counts = defaultdict(int)
+        msg_counts = defaultdict(int)
+        sa_counts = defaultdict(int)
+        wi_counts = defaultdict(int)
+        dk_counts = defaultdict(int)
+
+        for row in all_exploratory.data:
+            exp_counts[row["participant_id"]] += 1
+        for row in all_messages.data:
+            msg_counts[row["participant_id"]] += 1
+        for row in all_sa.data:
+            sa_counts[row["participant_id"]] += 1
+        for row in all_whatif.data:
+            wi_counts[row["participant_id"]] += 1
+        for row in all_dk.data:
+            dk_counts[row["participant_id"]] += 1
+
+        # Get all unique participant IDs with data
+        all_pids = set(exp_counts.keys()) | set(msg_counts.keys()) | set(sa_counts.keys()) | set(wi_counts.keys()) | set(dk_counts.keys())
+
+        # Get user info for participants with data
+        users_result = supabase.table("users").select("*").in_("participant_id", list(all_pids)).execute()
+        users_map = {u["participant_id"]: u for u in users_result.data}
+
+        participants_data = []
+        for pid in all_pids:
+            user = users_map.get(pid, {})
+            participants_data.append({
+                "participant_id": pid,
+                "participant_name": user.get("participant_name", f"P{pid}"),
+                "study_id": user.get("study_id", "N/A"),
+                "exploratory_count": exp_counts.get(pid, 0),
+                "messages_count": msg_counts.get(pid, 0),
+                "stakeholder_attribute_count": sa_counts.get(pid, 0),
+                "whatif_count": wi_counts.get(pid, 0),
+                "domain_knowledge_count": dk_counts.get(pid, 0),
+                "storage_files": []  # Only fetch when viewing specific participant
+            })
+
+        # Sort by participant name
+        participants_data.sort(key=lambda x: x["participant_name"])
+
+        return {
+            "status": "ok",
+            "participants": participants_data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/participant-explorer/{participant_id}")
+async def get_participant_details(participant_id: int):
+    """Get detailed data for a specific participant with actual storage content"""
+    try:
+        # Get user info for study_id
+        user = supabase.table("users").select("*").eq("participant_id", participant_id).execute()
+        study_id = user.data[0]["study_id"] if user.data else None
+
+        # Get all table data
+        exploratory = supabase.table("exploratory").select("*").eq("participant_id", participant_id).order("timestamp").execute()
+        messages = supabase.table("messages").select("*").eq("participant_id", participant_id).order("turn_index").execute()
+        stakeholder_attr = supabase.table("stakeholder_attribute").select("*").eq("participant_id", participant_id).order("turn").execute()
+        whatif = supabase.table("whatif").select("*").eq("participant_id", participant_id).execute()
+        domain_knowledge = supabase.table("domain_knowledge").select("*").eq("participant_id", participant_id).execute()
+
+        # Build a map of which turns have participant responses
+        turns_with_participant = set()
+        for msg in messages.data:
+            if msg.get("role") == "participant":
+                turns_with_participant.add(msg.get("turn_index"))
+
+        # Fetch actual message content from storage
+        # Note: Due to message_id collision (both agent and participant use same ID per turn),
+        # when both agent and participant message exist, storage file contains participant's message (last write wins)
+        # Only when agent message has no participant response does storage contain agent message
+        for msg in messages.data:
+            if msg.get("message_id"):
+                try:
+                    content_bytes = supabase.storage.from_("messages").download(msg["message_id"])
+                    content = content_bytes.decode("utf-8")
+
+                    if msg.get("role") == "participant":
+                        # Participant messages are always correct in storage
+                        msg["content"] = content
+                    else:
+                        # Agent message: only accurate if no participant response exists for this turn
+                        turn_idx = msg.get("turn_index")
+                        if turn_idx not in turns_with_participant:
+                            # No participant response, so storage has agent message
+                            msg["content"] = content
+                        else:
+                            # Participant response exists, storage has their message not agent's
+                            msg["content"] = "[Agent message overwritten by participant response in storage]"
+                except:
+                    msg["content"] = "[Content not available]"
+
+        # Fetch what-if content from storage
+        for whatif_entry in whatif.data:
+            if whatif_entry.get("file_id"):
+                try:
+                    content_bytes = supabase.storage.from_("what-if").download(whatif_entry["file_id"])
+                    content = content_bytes.decode("utf-8")
+                    # Try to parse as JSON
+                    try:
+                        import json as json_lib
+                        whatif_entry["content"] = json_lib.loads(content)
+                    except:
+                        whatif_entry["content"] = content
+                except:
+                    whatif_entry["content"] = "[Content not available]"
+
+        # Get storage files with actual content
+        storage_files = []
+        if study_id:
+            for bucket in ["messages", "json", "exploration", "what-if"]:
+                try:
+                    files = supabase.storage.from_(bucket).list()
+                    for f in files:
+                        if f["name"].startswith(f"{study_id}.{participant_id}."):
+                            # Fetch actual content
+                            try:
+                                content_bytes = supabase.storage.from_(bucket).download(f["name"])
+                                content = content_bytes.decode("utf-8")
+
+                                # Try to parse as JSON if it's from json bucket or has .json extension
+                                if bucket == "json" or f["name"].endswith(".json"):
+                                    try:
+                                        content = json.loads(content)
+                                    except:
+                                        pass  # Keep as string if JSON parsing fails
+
+                                storage_files.append({
+                                    "path": f"{bucket}/{f['name']}",
+                                    "bucket": bucket,
+                                    "filename": f["name"],
+                                    "content": content,
+                                    "size": f.get("metadata", {}).get("size", 0)
+                                })
+                            except Exception as e:
+                                # If download fails, still include the file path
+                                storage_files.append({
+                                    "path": f"{bucket}/{f['name']}",
+                                    "bucket": bucket,
+                                    "filename": f["name"],
+                                    "content": f"[Error loading content: {str(e)}]",
+                                    "size": 0
+                                })
+                except:
+                    pass
+
+        return {
+            "status": "ok",
+            "exploratory": exploratory.data,
+            "messages": messages.data,
+            "stakeholder_attribute": stakeholder_attr.data,
+            "whatif": whatif.data,
+            "domain_knowledge": domain_knowledge.data,
+            "storage_files": storage_files
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/notes")
+async def list_all_notes():
+    """Get all notes from exploration bucket - includes both general notes and participant notes"""
+    try:
+        # List all files in exploration bucket
+        # Participant notes have prefix "notes_" (with 's'), general notes have "note_" (singular)
+        all_files = supabase.storage.from_("exploration").list()
+
+        notes_list = []
+        for file in all_files:
+            # Include both participant notes (notes_) and general notes (note_)
+            if file["name"].startswith("note"):
+                # Download and get content
+                try:
+                    content_bytes = supabase.storage.from_("exploration").download(file["name"])
+                    content = content_bytes.decode("utf-8")
+
+                    # Determine the display name
+                    if file["name"].startswith("notes_"):
+                        # Participant note - extract ID
+                        participant_id = file["name"].replace("notes_", "").replace(".txt", "")
+                        display_name = f"Participant {participant_id}"
+                    else:
+                        # General note
+                        display_name = file["name"].replace("note_", "").replace(".txt", "")
+
+                    notes_list.append({
+                        "id": file["name"],
+                        "name": display_name,
+                        "content": content,
+                        "created_at": file.get("created_at", ""),
+                        "updated_at": file.get("updated_at", "")
+                    })
+                except:
+                    pass
+
+        # Sort by updated_at descending
+        notes_list.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+
+        return {"status": "ok", "notes": notes_list}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/notes")
+async def create_note(note_data: dict):
+    """Create or update a general note"""
+    try:
+        note_id = note_data.get("id", "")
+        content = note_data.get("content", "")
+
+        if not note_id:
+            # Generate new note ID with timestamp
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            note_id = f"note_{timestamp}.txt"
+        elif not note_id.startswith("note_"):
+            note_id = f"note_{note_id}.txt"
+
+        # Save to exploration bucket
+        supabase.storage.from_("exploration").upload(
+            note_id,
+            content.encode("utf-8"),
+            {"content-type": "text/plain", "upsert": "true"}
+        )
+
+        return {"status": "ok", "message": "Note saved successfully", "id": note_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/notes/{note_id}")
+async def delete_note(note_id: str):
+    """Delete a note"""
+    try:
+        supabase.storage.from_("exploration").remove([note_id])
+        return {"status": "ok", "message": "Note deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/notes/{participant_id}")
+async def get_notes(participant_id: int):
+    """Get notes for a participant"""
+    try:
+        # Try to fetch notes from exploration bucket (notes stored with prefix "notes_")
+        notes_id = f"notes_{participant_id}.txt"
+        try:
+            content_bytes = supabase.storage.from_("exploration").download(notes_id)
+            notes_content = content_bytes.decode("utf-8")
+            return {"status": "ok", "notes": notes_content}
+        except:
+            # No notes exist yet
+            return {"status": "ok", "notes": ""}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/notes/{participant_id}")
+async def save_notes(participant_id: int, notes: dict):
+    """Save notes for a participant"""
+    try:
+        notes_content = notes.get("content", "")
+        notes_id = f"notes_{participant_id}.txt"
+
+        # Save to exploration bucket (using upsert to overwrite if exists)
+        supabase.storage.from_("exploration").upload(
+            notes_id,
+            notes_content.encode("utf-8"),
+            {"content-type": "text/plain", "upsert": "true"}
+        )
+
+        return {"status": "ok", "message": "Notes saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/upload-image")
+async def upload_image(image_data: dict):
+    """Upload an image to storage bucket"""
+    try:
+        import base64
+        from datetime import datetime
+
+        # Get image data and metadata
+        image_base64 = image_data.get("image", "")
+        participant_id = image_data.get("participant_id", "general")
+
+        # Remove data URL prefix if present
+        if "base64," in image_base64:
+            image_base64 = image_base64.split("base64,")[1]
+
+        # Decode base64
+        image_bytes = base64.b64decode(image_base64)
+
+        # Generate unique filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        filename = f"image_{participant_id}_{timestamp}.png"
+
+        # Upload to exploration bucket
+        supabase.storage.from_("exploration").upload(
+            filename,
+            image_bytes,
+            {"content-type": "image/png", "upsert": "false"}
+        )
+
+        return {
+            "status": "ok",
+            "filename": filename,
+            "url": f"http://localhost:8000/get-image/{filename}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/get-image/{filename}")
+async def get_image(filename: str):
+    """Get an image from storage bucket"""
+    try:
+        from fastapi.responses import Response
+
+        # Download from exploration bucket
+        image_bytes = supabase.storage.from_("exploration").download(filename)
+
+        return Response(content=image_bytes, media_type="image/png")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/test")
+async def test_visualization():
+    """Get all exploratory snapshots showing how participants built tests over time (S4 and S5 only)"""
+    try:
+        # Query ALL exploratory data for study IDs 4 and 5, ordered by timestamp
+        result = supabase.table("exploratory").select("*").in_("study_id", [4, 5]).order("participant_id").order("timestamp").execute()
+
+        # Get all unique participant IDs to fetch user info
+        participant_ids = set(row["participant_id"] for row in result.data)
+
+        # Fetch user data for participant names
+        users_map = {}
+        if participant_ids:
+            users_result = supabase.table("users").select("*").in_("participant_id", list(participant_ids)).execute()
+            for user in users_result.data:
+                users_map[user["participant_id"]] = {
+                    "participant_name": user.get("participant_name", f"P{user['participant_id']}"),
+                    "study_id": user.get("study_id", "N/A")
+                }
+
+        # Group by participant and timestamp to create timeline snapshots
+        # Each snapshot shows the cumulative state at that point in time
+        participant_timelines = {}
+
+        for row in result.data:
+            pid = row["participant_id"]
+            timestamp = row["timestamp"]
+            user_info = users_map.get(pid, {"participant_name": f"P{pid}", "study_id": "N/A"})
+            participant_name = user_info["participant_name"]
+
+            # Initialize participant timeline if needed
+            if pid not in participant_timelines:
+                participant_timelines[pid] = {
+                    "participant_name": participant_name,
+                    "participant_id": pid,
+                    "study_id": row["study_id"],
+                    "snapshots": []
+                }
+
+            # Each row represents an action at a timestamp
+            participant_timelines[pid]["snapshots"].append({
+                "timestamp": timestamp,
+                "turn": row["turn"],
+                "version": row["version"],  # "add", "delete", or "test_run"
+                "stakeholder": row["stakeholder"],
+                "attribute": row["attribute"],
+                "value": row["value"]
+            })
+
+        # Convert snapshots to cumulative states
+        all_frames = []
+        for pid, timeline in participant_timelines.items():
+            current_state = {}  # Maps (stakeholder, attribute) -> value
+
+            for snapshot in timeline["snapshots"]:
+                timestamp = snapshot["timestamp"]
+                version = snapshot["version"]
+                stakeholder = snapshot["stakeholder"]
+                attribute = snapshot["attribute"]
+                value = snapshot["value"]
+
+                key = (stakeholder, attribute)
+
+                # Apply the action
+                if version == "add" or version == "test_run":
+                    current_state[key] = value
+                elif version == "delete":
+                    current_state.pop(key, None)
+
+                # Create a frame with the current cumulative state
+                attributes = [
+                    {
+                        "stakeholder": k[0],
+                        "attribute": k[1],
+                        "value": v
+                    }
+                    for k, v in current_state.items()
+                ]
+
+                all_frames.append({
+                    "participant_id": pid,
+                    "participant_name": timeline["participant_name"],
+                    "study_id": timeline["study_id"],
+                    "turn": snapshot["turn"],
+                    "timestamp": timestamp,
+                    "action": version,
+                    "attributes": attributes
+                })
+
+        # Sort by participant name then timestamp
+        all_frames.sort(key=lambda x: (x["participant_name"], x["timestamp"]))
+
+        return {
+            "status": "ok",
+            "frames": all_frames,
+            "total_frames": len(all_frames)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
