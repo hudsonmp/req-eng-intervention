@@ -2,6 +2,15 @@
 
 const API_BASE = 'http://localhost:8000';
 
+// Get study type by ID
+export async function getStudyType(studyId: number): Promise<{ type: string }> {
+  const res = await fetch(`${API_BASE}/study/${studyId}/type`);
+  if (!res.ok) {
+    throw new Error('Study not found');
+  }
+  return res.json();
+}
+
 // Types
 export interface StakeholderAttribute {
   stakeholder: string;
@@ -38,6 +47,11 @@ export async function sendMessage(
   participantId: string,
   turnNumber: number
 ): Promise<{ response: string; turn_number: number }> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return { response: 'Test mode: No response from backend', turn_number: turnNumber + 1 };
+  }
+
   const res = await fetch(`${API_BASE}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -55,6 +69,11 @@ export async function logAttribute(
   action: 'add' | 'delete',
   turn: number
 ): Promise<void> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return;
+  }
+
   await fetch(`${API_BASE}/intervention/log-attribute`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -69,6 +88,11 @@ export async function beginHelpingStudent(
   turnNumber: number,
   stakeholderAttributes: StakeholderAttribute[]
 ): Promise<InterventionResponse> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return { success: true, message: 'Test mode: No backend response' };
+  }
+
   const res = await fetch(`${API_BASE}/intervention/begin-helping`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -89,6 +113,11 @@ export async function submitCostFunction(
   turnNumber: number,
   optimizationTarget: string
 ): Promise<void> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return;
+  }
+
   await fetch(`${API_BASE}/intervention/submit-cost-function`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -109,6 +138,11 @@ export async function testStudentCode(
   turnNumber: number,
   testCases: StakeholderAttribute[]
 ): Promise<InterventionResponse> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return { success: true, message: 'Test mode: No backend response' };
+  }
+
   const res = await fetch(`${API_BASE}/intervention/test-student-code`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -130,6 +164,11 @@ export async function logExploratory(
   action: string,
   data: { stakeholder?: string; attribute?: string; value?: string }
 ): Promise<void> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return;
+  }
+
   await fetch(`${API_BASE}/intervention/log-exploratory`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -150,6 +189,11 @@ export async function generateScaffoldedValues(
   turnNumber: number,
   runNumber: number
 ): Promise<{ scaffolded_values: { value_options: ScaffoldedValueOption[] } }> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return { scaffolded_values: { value_options: [] } };
+  }
+
   const res = await fetch(`${API_BASE}/intervention/generate-scaffolded-values`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -168,6 +212,11 @@ export async function getBugQueue(
   studyId: number,
   participantId: string
 ): Promise<{ run_number: number; bug_id: string; phase: string }> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return { run_number: 1, bug_id: 'test_bug', phase: 'test' };
+  }
+
   const res = await fetch(`${API_BASE}/intervention/bug-queue/${studyId}/${participantId}`);
   return res.json();
 }
@@ -179,6 +228,11 @@ export async function completeRun(
   runNumber: number,
   bugFound: boolean
 ): Promise<{ next_run: number; message: string }> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return { next_run: runNumber + 1, message: 'Test mode: Run completed' };
+  }
+
   const res = await fetch(`${API_BASE}/intervention/complete-run`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -199,6 +253,11 @@ export async function switchMode(
   runNumber: number,
   newMode: 'helping' | 'exploratory'
 ): Promise<void> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return;
+  }
+
   await fetch(`${API_BASE}/intervention/switch-mode?study_id=${studyId}&participant_id=${participantId}&run_number=${runNumber}&new_mode=${newMode}`, {
     method: 'POST'
   });
@@ -214,6 +273,11 @@ export async function submitHypothesis(
   justification: string,
   expectedBehavior: string
 ): Promise<HypothesisResult> {
+  // Skip API call if in test mode
+  if (participantId === 'test') {
+    return { bug_exposed: false, hint: 'Test mode', feedback: 'Test mode: No backend response' };
+  }
+
   const res = await fetch(`${API_BASE}/intervention/submit-hypothesis`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

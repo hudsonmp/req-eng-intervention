@@ -9,7 +9,7 @@ interface UserDropdown {
   customText: string;
 }
 
-function App() {
+function Intervention() {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -52,16 +52,7 @@ function App() {
     error: string;
   }
   
-  const [interactionTests, setInteractionTests] = useState<InteractionTest[]>([
-    { id: 1, stakeholder: 'rider_1', attribute: 'request_time', value: '', value2: '', error: '' },
-    { id: 2, stakeholder: 'rider_1', attribute: 'pickup_location', value: '', value2: '', error: '' },
-    { id: 3, stakeholder: 'rider_1', attribute: 'destination', value: '', value2: '', error: '' },
-    { id: 4, stakeholder: 'rider_2', attribute: 'request_time', value: '', value2: '', error: '' },
-    { id: 5, stakeholder: 'rider_2', attribute: 'pickup_location', value: '', value2: '', error: '' },
-    { id: 6, stakeholder: 'rider_2', attribute: 'destination', value: '', value2: '', error: '' },
-    { id: 7, stakeholder: 'vehicle_1', attribute: 'car_current_location', value: '', value2: '', error: '' },
-    { id: 8, stakeholder: 'vehicle_2', attribute: 'car_current_location', value: '', value2: '', error: '' }
-  ]);
+  const [interactionTests, setInteractionTests] = useState<InteractionTest[]>([]);
   const [hasReceivedLLMMessage, setHasReceivedLLMMessage] = useState(false);
   const [isExploratoryMode, setIsExploratoryMode] = useState(false);
   const [showDistanceTool, setShowDistanceTool] = useState(false);
@@ -2143,4 +2134,4 @@ function App() {
   );
 }
 
-export default App;
+export default Intervention;
