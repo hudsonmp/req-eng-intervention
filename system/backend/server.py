@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client, Client
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
 import anthropic
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # Load environment variables
 load_dotenv()
@@ -12,15 +13,51 @@ load_dotenv()
 # Initialize FastAPI app
 app = FastAPI()
 
-# Add CORS middleware - allow both localhost and Railway frontend
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Custom CORS middleware to handle Vercel's dynamic URLs
+class CustomCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        origin = request.headers.get("origin")
+
+        # Allow localhost and any Vercel deployment
+        allowed = False
+        if origin:
+            if "localhost" in origin or origin.startswith("http://127.0.0.1"):
+                allowed = True
+            elif origin.endswith(".vercel.app"):
+                allowed = True
+            elif origin.endswith(".railway.app"):
+                allowed = True
+            # Check custom allowed origins from env
+            custom_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
+            if origin in [o.strip() for o in custom_origins if o.strip()]:
+                allowed = True
+
+        # Handle preflight request
+        if request.method == "OPTIONS":
+            if allowed:
+                return Response(
+                    status_code=200,
+                    headers={
+                        "Access-Control-Allow-Origin": origin,
+                        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                        "Access-Control-Allow-Headers": "*",
+                        "Access-Control-Allow-Credentials": "true",
+                    }
+                )
+
+        response = await call_next(request)
+
+        # Add CORS headers to response
+        if allowed and origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+
+        return response
+
+from starlette.responses import Response
+app.add_middleware(CustomCORSMiddleware)
 
 # Initialize Supabase client
 SUPABASE_URL = os.getenv("SUPABASE_URL")
