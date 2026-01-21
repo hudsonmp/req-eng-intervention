@@ -8,7 +8,58 @@ function Landing() {
   const [studyId, setStudyId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [bypassMode, setBypassMode] = useState(false);
+  const [manualStudyType, setManualStudyType] = useState('pre-assessment');
   const navigate = useNavigate();
+
+  const handleBypass = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const trimmedParticipantId = participantId.trim();
+    const trimmedStudyId = studyId.trim();
+
+    // Validate inputs
+    if (!trimmedParticipantId) {
+      setError('Please enter a Participant ID');
+      return;
+    }
+
+    if (!trimmedStudyId) {
+      setError('Please enter a Study ID');
+      return;
+    }
+
+    const studyIdNum = parseInt(trimmedStudyId);
+    if (isNaN(studyIdNum)) {
+      setError('Study ID must be a number');
+      return;
+    }
+
+    setError('');
+    console.log('Bypass mode: Skipping backend authentication');
+
+    // Determine route path from manual selection
+    let routePath = '';
+    if (manualStudyType === 'pre-assessment') {
+      routePath = '/pre-assessment';
+    } else if (manualStudyType === 'intervention') {
+      routePath = '/intervention';
+    } else if (manualStudyType === 'post-assessment') {
+      routePath = '/post-assessment';
+    }
+
+    console.log(`Navigating to: ${routePath}`);
+
+    // Navigate with IDs (bypass mode)
+    navigate(routePath, {
+      state: {
+        participantId: trimmedParticipantId,
+        studyId: studyIdNum,
+        isTestMode: true, // Treat bypass as test mode
+        bypassMode: true
+      }
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,8 +131,11 @@ function Landing() {
       });
     } catch (err) {
       console.error('Error loading study:', err);
-      setError(`Failed to load study. Please check your Study ID. Error: ${err instanceof Error ? err.message : String(err)}`);
+      // Fallback to bypass mode if backend fails
+      console.log('Backend failed, falling back to bypass mode');
+      setError('Backend unavailable. Using bypass mode.');
       setLoading(false);
+      setBypassMode(true);
     }
   };
 
@@ -123,9 +177,76 @@ function Landing() {
 
           {error && <div className="error-message">{error}</div>}
 
-          <button type="submit" className="submit-button" disabled={loading}>
-            {loading ? 'Loading...' : 'Start Study'}
-          </button>
+          {!bypassMode ? (
+            <>
+              <button type="submit" className="submit-button" disabled={loading}>
+                {loading ? 'Loading...' : 'Start Study'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBypassMode(true)}
+                className="bypass-button"
+                style={{
+                  marginTop: '10px',
+                  padding: '8px 16px',
+                  background: 'transparent',
+                  color: '#666',
+                  border: '1px solid #ccc',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit'
+                }}
+              >
+                Use Bypass Mode (No Backend)
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="form-group">
+                <label htmlFor="studyType">Study Type</label>
+                <select
+                  id="studyType"
+                  value={manualStudyType}
+                  onChange={(e) => setManualStudyType(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    fontSize: '14px',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  <option value="pre-assessment">Pre-Assessment</option>
+                  <option value="intervention">Intervention</option>
+                  <option value="post-assessment">Post-Assessment</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={handleBypass}
+                className="submit-button"
+              >
+                Start (Bypass Mode)
+              </button>
+              <button
+                type="button"
+                onClick={() => setBypassMode(false)}
+                style={{
+                  marginTop: '10px',
+                  padding: '8px 16px',
+                  background: 'transparent',
+                  color: '#666',
+                  border: '1px solid #ccc',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  width: '100%'
+                }}
+              >
+                Back to Normal Mode
+              </button>
+            </>
+          )}
         </form>
       </div>
     </div>
