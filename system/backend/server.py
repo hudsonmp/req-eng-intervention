@@ -12,10 +12,11 @@ load_dotenv()
 # Initialize FastAPI app
 app = FastAPI()
 
-# Add CORS middleware
+# Add CORS middleware - allow both localhost and Railway frontend
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,9 +27,10 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("Missing Supabase credentials in environment variables")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    print("Warning: Missing Supabase credentials in environment variables")
+    supabase = None
+else:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Initialize Anthropic client
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
@@ -236,6 +238,9 @@ async def submit_pre_assessment(response: PreAssessmentResponse):
     """
     Save a completed pre-assessment response to Supabase.
     """
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database connection not available")
+
     try:
         # Prepare data for insertion
         data = {
@@ -283,6 +288,9 @@ async def get_study_type(study_id: int):
 
     Queries the 'studies' table for the 'type' column (or 'phase' as fallback).
     """
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database connection not available")
+
     try:
         # Try to query with 'type' column first
         try:
@@ -318,8 +326,13 @@ async def get_study_type(study_id: int):
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "supabase_connected": supabase is not None,
+        "anthropic_configured": anthropic_client is not None
+    }
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
