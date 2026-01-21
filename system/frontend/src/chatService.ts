@@ -1,6 +1,6 @@
 // API service for /intervention - calls real backend
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 // Get study type by ID
 export async function getStudyType(studyId: number): Promise<{ type: string }> {

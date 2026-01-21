@@ -6,13 +6,14 @@ interface Reservation {
   partySize: number;
 }
 
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const ALL_TIME_SLOTS = ['5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM'];
 const ALL_PARTY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8];
 
 // Claude feedback API call
 async function getFeedbackFromClaude(userTypes: string[]): Promise<string> {
   try {
-    const response = await fetch('http://localhost:8000/pre-assessment/user-types-feedback', {
+    const response = await fetch(`${API_BASE}/pre-assessment/user-types-feedback`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_types: userTypes })
@@ -28,7 +29,7 @@ async function getFeedbackFromClaude(userTypes: string[]): Promise<string> {
 // Generate action options using Claude
 async function generateActionOptions(userType: string): Promise<string[]> {
   try {
-    const response = await fetch('http://localhost:8000/pre-assessment/generate-actions', {
+    const response = await fetch(`${API_BASE}/pre-assessment/generate-actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_type: userType })
@@ -216,7 +217,7 @@ function Reservation() {
         combined_iterations: iterations
       };
 
-      const response = await fetch('http://localhost:8000/pre-assessment/submit', {
+      const response = await fetch(`${API_BASE}/pre-assessment/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -255,7 +256,7 @@ function Reservation() {
 
     setScenarioLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/pre-assessment/generate-scenario-response', {
+      const response = await fetch(`${API_BASE}/pre-assessment/generate-scenario-response`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
