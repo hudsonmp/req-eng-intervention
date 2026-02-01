@@ -1,0 +1,1062 @@
+import React, { useState } from 'react';
+
+interface Reservation {
+  id: number;
+  time: string;
+  partySize: number;
+}
+
+const ALL_TIME_SLOTS = ['5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM'];
+const ALL_PARTY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8];
+
+// Claude feedback API call
+async function getFeedbackFromClaude(userTypes: string[]): Promise<string> {
+  try {
+    const response = await fetch('http://localhost:8000/pre-assessment/user-types-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_types: userTypes })
+    });
+    const data = await response.json();
+    return data.feedback;
+  } catch (error) {
+    console.error('Error getting feedback:', error);
+    return 'Unable to get feedback at this time.';
+  }
+}
+
+// Generate action options using Claude
+async function generateActionOptions(userType: string): Promise<string[]> {
+  try {
+    const response = await fetch('http://localhost:8000/pre-assessment/generate-actions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_type: userType })
+    });
+    const data = await response.json();
+    return data.actions;
+  } catch (error) {
+    console.error('Error generating actions:', error);
+    return [];
+  }
+}
+
+function Reservation() {
+  // Diner state
+  const [selectedTime, setSelectedTime] = useState('');
+  const [partySize, setPartySize] = useState(2);
+  const [reservation, setReservation] = useState<Reservation | null>(null);
+  const [waitlist, setWaitlist] = useState<Reservation[]>([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  // Owner settings (NOT synced to diner - intentional bug)
+  const [ownerTimes, setOwnerTimes] = useState<string[]>(ALL_TIME_SLOTS);
+  const [ownerPartySizes, setOwnerPartySizes] = useState<number[]>(ALL_PARTY_SIZES);
+
+  // Diner sees all options (bug) - not filtered by owner settings
+  const dinerTimes = ALL_TIME_SLOTS;
+  const dinerPartySizes = ALL_PARTY_SIZES;
+
+  // Step progression state
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // User types question state
+  const [userType1, setUserType1] = useState('');
+  const [userType2, setUserType2] = useState('');
+  const [userType3, setUserType3] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  // Question 2: Actions for stakeholder 1
+  const [actionOptions, setActionOptions] = useState<string[]>([]);
+  const [selectedActions, setSelectedActions] = useState<string[]>([]);
+  const [isGeneratingActions, setIsGeneratingActions] = useState(false);
+
+  // Questions 3+: Free response actions for remaining stakeholders
+  const [stakeholder2Actions, setStakeholder2Actions] = useState('');
+  const [stakeholder3Actions, setStakeholder3Actions] = useState('');
+
+  // MCQ question about closed restaurant scenario
+  const [selectedScenarioAnswer, setSelectedScenarioAnswer] = useState('');
+
+  const scenarioOptions = [
+    { id: 'correct', text: 'That time slot should not be available for booking in the diner view' },
+    { id: 'distractor1', text: 'The diner can still book but receives an email notification that the restaurant is closed' },
+    { id: 'distractor2', text: 'The reservation goes through but is marked as pending for owner approval' },
+    { id: 'distractor3', text: 'The diner sees a warning message but can still complete the booking' }
+  ];
+
+  // MCQ question about cancelling existing reservation
+  const [selectedCancellationAnswer, setSelectedCancellationAnswer] = useState('');
+
+  const cancellationOptions = [
+    { id: 'correct', text: 'The diner should be notified immediately and the reservation should be cancelled in the system' },
+    { id: 'distractor1', text: 'The reservation stays active but is marked as "pending" until the diner confirms' },
+    { id: 'distractor2', text: 'The system automatically reschedules the reservation to the next available date' },
+    { id: 'distractor3', text: 'The reservation remains in the system and the diner is informed when they arrive' }
+  ];
+
+  // MCQ question about important information to collect
+  const [selectedInfoAnswer, setSelectedInfoAnswer] = useState('');
+
+  const infoOptions = [
+    { id: 'correct', text: 'Email address' },
+    { id: 'distractor1', text: 'Desired seat color' },
+    { id: 'distractor2', text: 'Middle name' },
+    { id: 'distractor3', text: 'Country of residence' }
+  ];
+
+  const toggleTime = (time: string) => {
+    setOwnerTimes(prev =>
+      prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
+    );
+  };
+
+  const togglePartySize = (size: number) => {
+    setOwnerPartySizes(prev =>
+      prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
+    );
+  };
+
+  const handleBook = () => {
+    if (!selectedTime) return;
+    const newRes: Reservation = { id: Date.now(), time: selectedTime, partySize };
+    setReservation(newRes);
+    setWaitlist([...waitlist, newRes]);
+    setShowConfirmation(true);
+    setTimeout(() => setShowConfirmation(false), 3000);
+  };
+
+  const handleCancel = () => {
+    if (reservation) {
+      setWaitlist(waitlist.filter(r => r.id !== reservation.id));
+      setReservation(null);
+      setSelectedTime('');
+    }
+  };
+
+  const handleSubmitUserTypes = async () => {
+    const userTypes = [userType1, userType2, userType3].filter(t => t.trim() !== '');
+
+    if (userTypes.length === 0) {
+      setFeedback('Please enter at least one user type.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFeedback('');
+
+    const claudeFeedback = await getFeedbackFromClaude(userTypes);
+    setFeedback(claudeFeedback);
+    setHasSubmitted(true);
+    setIsSubmitting(false);
+
+    // Generate action options for Question 2 using the first user type
+    if (userType1.trim() !== '') {
+      setIsGeneratingActions(true);
+      const actions = await generateActionOptions(userType1.trim());
+      setActionOptions(actions);
+      setIsGeneratingActions(false);
+    }
+
+    // Move to next step after a brief delay to show feedback
+    setTimeout(() => {
+      setCurrentStep(2);
+    }, 2000);
+  };
+
+  const toggleAction = (action: string) => {
+    if (selectedActions.includes(action)) {
+      setSelectedActions(selectedActions.filter(a => a !== action));
+    } else {
+      setSelectedActions([...selectedActions, action]);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '12px', gap: '12px', boxSizing: 'border-box', background: '#f5f5f5' }}>
+      {/* Main container */}
+      <div style={{ display: 'flex', flex: 1, gap: '12px', overflow: 'hidden' }}>
+        {/* Left side - Diner and Owner views stacked */}
+        <div style={{ display: 'flex', flexDirection: 'column', width: '50%', gap: '12px' }}>
+          {/* Diner View Container */}
+          <div style={{ flex: 1, boxSizing: 'border-box' }}>
+            <div style={{
+              border: '1px solid #ccc',
+              background: 'white',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '0',
+              overflow: 'hidden',
+              boxShadow: 'none'
+            }}>
+              {/* Diner window title bar */}
+              <div style={{
+                background: '#2c5f2d',
+                color: '#fff',
+                padding: '8px 12px',
+                fontSize: '13px',
+                fontWeight: 'normal',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid #ccc',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '16px' }}>🍽️</span>
+                  <span>Diner View - Reservation System</span>
+                </div>
+              </div>
+
+              {/* Diner content */}
+              <div style={{ padding: '16px', flex: 1, overflow: 'auto', background: '#ffffff' }}>
+                {showConfirmation && (
+                  <div style={{
+                    background: '#e8f5e9',
+                    border: '1px solid #66bb6a',
+                    padding: '12px',
+                    marginBottom: '14px',
+                    fontSize: '13px',
+                    borderRadius: '0',
+                    boxShadow: 'none',
+                    fontWeight: 'normal',
+                    color: '#2c5f2d'
+                  }}>
+                    ✓ Reservation confirmed for {reservation?.time}, party of {reservation?.partySize}
+                  </div>
+                )}
+
+                {!reservation ? (
+                  <>
+                    <div style={{
+                      marginBottom: '16px'
+                    }}>
+                      <label style={{
+                        display: 'block',
+                        marginBottom: '6px',
+                        fontSize: '13px',
+                        color: '#333',
+                        fontWeight: 'normal'
+                      }}>
+                        Select Time
+                      </label>
+                      <select
+                        value={selectedTime}
+                        onChange={e => setSelectedTime(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          border: '1px solid #ccc',
+                          fontSize: '14px',
+                          borderRadius: '0',
+                          background: '#fff',
+                          fontFamily: 'inherit'
+                        }}
+                      >
+                        <option value="">Choose a time slot</option>
+                        {dinerTimes.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+
+                    <div style={{
+                      marginBottom: '16px'
+                    }}>
+                      <label style={{
+                        display: 'block',
+                        marginBottom: '6px',
+                        fontSize: '13px',
+                        color: '#333',
+                        fontWeight: 'normal'
+                      }}>
+                        Party Size
+                      </label>
+                      <select
+                        value={partySize}
+                        onChange={e => setPartySize(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          border: '1px solid #ccc',
+                          fontSize: '14px',
+                          borderRadius: '0',
+                          background: '#fff',
+                          fontFamily: 'inherit'
+                        }}
+                      >
+                        {dinerPartySizes.map(n => <option key={n} value={n}>{n} {n === 1 ? 'guest' : 'guests'}</option>)}
+                      </select>
+                    </div>
+
+                    <button
+                      onClick={handleBook}
+                      disabled={!selectedTime}
+                      style={{
+                        width: '100%',
+                        padding: '10px 16px',
+                        background: selectedTime ? '#2c5f2d' : '#999',
+                        color: 'white',
+                        border: 'none',
+                        fontSize: '14px',
+                        fontWeight: 'normal',
+                        borderRadius: '0',
+                        cursor: selectedTime ? 'pointer' : 'not-allowed',
+                        boxShadow: 'none',
+                        fontFamily: 'inherit'
+                      }}
+                    >
+                      Confirm Reservation
+                    </button>
+                  </>
+                ) : (
+                  <div>
+                    <div style={{
+                      background: '#e8f5e9',
+                      padding: '12px',
+                      marginBottom: '14px',
+                      fontSize: '13px',
+                      borderRadius: '0',
+                      border: '1px solid #66bb6a',
+                      boxShadow: 'none'
+                    }}>
+                      <div style={{ fontWeight: 'normal', marginBottom: '6px', fontSize: '13px', color: '#2c5f2d' }}>Your Reservation</div>
+                      <div style={{ color: '#2c5f2d', fontFamily: 'inherit', fontSize: '13px' }}>{reservation.time} · {reservation.partySize} {reservation.partySize === 1 ? 'guest' : 'guests'}</div>
+                    </div>
+                    <button
+                      onClick={handleCancel}
+                      style={{
+                        width: '100%',
+                        padding: '10px 16px',
+                        background: '#d32f2f',
+                        border: 'none',
+                        fontSize: '14px',
+                        fontWeight: 'normal',
+                        color: 'white',
+                        borderRadius: '0',
+                        cursor: 'pointer',
+                        boxShadow: 'none',
+                        fontFamily: 'inherit'
+                      }}
+                    >
+                      Cancel Reservation
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Owner View Container */}
+          <div style={{ flex: 1, boxSizing: 'border-box' }}>
+            <div style={{
+              border: '1px solid #ccc',
+              background: 'white',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '0',
+              overflow: 'hidden',
+              boxShadow: 'none'
+            }}>
+              {/* Owner window title bar */}
+              <div style={{
+                background: '#1565c0',
+                color: '#fff',
+                padding: '8px 12px',
+                fontSize: '13px',
+                fontWeight: 'normal',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid #ccc',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '16px' }}>⚙️</span>
+                  <span>Owner View - Admin Panel</span>
+                </div>
+              </div>
+
+              {/* Owner content */}
+              <div style={{ padding: '16px', flex: 1, overflow: 'auto', background: '#ffffff' }}>
+                <div style={{
+                  marginBottom: '16px'
+                }}>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '13px',
+                    color: '#333',
+                    fontWeight: 'normal'
+                  }}>
+                    Available Time Slots
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {ALL_TIME_SLOTS.map(time => (
+                      <button
+                        key={time}
+                        onClick={() => toggleTime(time)}
+                        style={{
+                          padding: '6px 10px',
+                          fontSize: '13px',
+                          border: '1px solid #ccc',
+                          borderRadius: '0',
+                          background: ownerTimes.includes(time) ? '#1565c0' : '#fff',
+                          color: ownerTimes.includes(time) ? '#fff' : '#333',
+                          cursor: 'pointer',
+                          fontWeight: 'normal',
+                          boxShadow: 'none',
+                          fontFamily: 'inherit'
+                        }}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{
+                  marginBottom: '16px'
+                }}>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '13px',
+                    color: '#333',
+                    fontWeight: 'normal'
+                  }}>
+                    Allowed Party Sizes
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {ALL_PARTY_SIZES.map(size => (
+                      <button
+                        key={size}
+                        onClick={() => togglePartySize(size)}
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '13px',
+                          border: '1px solid #ccc',
+                          borderRadius: '0',
+                          background: ownerPartySizes.includes(size) ? '#1565c0' : '#fff',
+                          color: ownerPartySizes.includes(size) ? '#fff' : '#333',
+                          cursor: 'pointer',
+                          fontWeight: 'normal',
+                          boxShadow: 'none',
+                          fontFamily: 'inherit'
+                        }}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{
+                  background: '#e3f2fd',
+                  padding: '12px',
+                  borderRadius: '0',
+                  fontSize: '13px',
+                  color: '#1565c0',
+                  border: '1px solid #64b5f6',
+                  boxShadow: 'none'
+                }}>
+                  <div style={{ fontWeight: 'normal', marginBottom: '4px', fontSize: '13px' }}>Current Settings</div>
+                  <div style={{ fontFamily: 'inherit', color: '#1976d2' }}>{ownerTimes.length} time slots · {ownerPartySizes.length} party sizes</div>
+                </div>
+
+                {waitlist.length > 0 && (
+                  <div style={{
+                    marginTop: '16px',
+                    padding: '12px',
+                    background: '#fff8e1',
+                    border: '1px solid #ffb74d',
+                    borderRadius: '0'
+                  }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: 'normal',
+                      marginBottom: '8px',
+                      color: '#f57c00'
+                    }}>
+                      📋 Reservations ({waitlist.length})
+                    </div>
+                    {waitlist.map(r => (
+                      <div key={r.id} style={{
+                        fontSize: '13px',
+                        padding: '8px',
+                        background: '#fff',
+                        border: '1px solid #ffb74d',
+                        marginBottom: '4px',
+                        borderRadius: '0',
+                        fontFamily: 'inherit',
+                        color: '#e65100',
+                        boxShadow: 'none'
+                      }}>
+                        {r.time} · {r.partySize} guests
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right side - Interaction panel */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          border: '1px solid #ccc',
+          borderRadius: '0',
+          overflow: 'hidden',
+          background: 'white',
+          height: '100%',
+          boxShadow: 'none'
+        }}>
+          {/* Interaction window title bar */}
+          <div style={{
+            background: '#6a1b9a',
+            color: '#fff',
+            padding: '8px 12px',
+            fontSize: '13px',
+            fontWeight: 'normal',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '1px solid #ccc',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '16px' }}>💬</span>
+              <span>Interaction - Study Questions</span>
+            </div>
+          </div>
+
+          {/* Interaction content */}
+          <div style={{
+            flex: '1 1 0',
+            padding: '16px',
+            overflowY: 'auto',
+            background: '#ffffff'
+          }}>
+            {/* Question message */}
+            <div style={{
+              padding: '12px',
+              background: '#f3e5f5',
+              border: '1px solid #ba68c8',
+              borderRadius: '0',
+              marginBottom: '16px',
+              fontSize: '13px',
+              lineHeight: '1.6',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}>
+              <div style={{ fontWeight: 'normal', marginBottom: '8px', color: '#6a1b9a' }}>
+                📝 Question 1:
+              </div>
+              <div style={{ color: '#7b1fa2' }}>
+                What are the different types of users that would use a dinner reservation system? List at least 3 user types.
+              </div>
+            </div>
+
+            {/* Input fields */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 'normal',
+                  color: '#333'
+                }}>
+                  User Type 1:
+                </label>
+                <input
+                  type="text"
+                  value={userType1}
+                  onChange={(e) => setUserType1(e.target.value)}
+                  disabled={hasSubmitted}
+                  placeholder="e.g., Restaurant owner"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '0',
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    background: hasSubmitted ? '#f5f5f5' : '#fff'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 'normal',
+                  color: '#333'
+                }}>
+                  User Type 2:
+                </label>
+                <input
+                  type="text"
+                  value={userType2}
+                  onChange={(e) => setUserType2(e.target.value)}
+                  disabled={hasSubmitted}
+                  placeholder="e.g., Diner"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '0',
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    background: hasSubmitted ? '#f5f5f5' : '#fff'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 'normal',
+                  color: '#333'
+                }}>
+                  User Type 3:
+                </label>
+                <input
+                  type="text"
+                  value={userType3}
+                  onChange={(e) => setUserType3(e.target.value)}
+                  disabled={hasSubmitted}
+                  placeholder="e.g., Restaurant staff"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '0',
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    background: hasSubmitted ? '#f5f5f5' : '#fff'
+                  }}
+                />
+              </div>
+
+              {/* Submit button */}
+              <button
+                onClick={handleSubmitUserTypes}
+                disabled={isSubmitting || hasSubmitted}
+                style={{
+                  width: '100%',
+                  padding: '10px 16px',
+                  background: (!isSubmitting && !hasSubmitted) ? '#6a1b9a' : '#999',
+                  color: 'white',
+                  border: 'none',
+                  fontSize: '14px',
+                  fontWeight: 'normal',
+                  borderRadius: '0',
+                  cursor: (!isSubmitting && !hasSubmitted) ? 'pointer' : 'not-allowed',
+                  boxShadow: 'none',
+                  fontFamily: 'inherit'
+                }}
+              >
+                {isSubmitting ? 'Analyzing...' : hasSubmitted ? 'Submitted' : 'Submit'}
+              </button>
+            </div>
+
+            {/* Feedback display */}
+            {feedback && (
+              <div style={{
+                padding: '12px',
+                background: '#e8f5e9',
+                border: '1px solid #66bb6a',
+                borderRadius: '0',
+                fontSize: '13px',
+                lineHeight: '1.6',
+                color: '#2c5f2d',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                marginBottom: '16px'
+              }}>
+                <div style={{ fontWeight: 'normal', marginBottom: '6px' }}>
+                  ✓ Feedback:
+                </div>
+                <div style={{ color: '#2c5f2d' }}>
+                  {feedback}
+                </div>
+              </div>
+            )}
+
+            {/* Question 2: Actions for stakeholder */}
+            {hasSubmitted && userType1.trim() !== '' && (
+              <>
+                <div style={{
+                  padding: '12px',
+                  background: '#f3e5f5',
+                  border: '1px solid #ba68c8',
+                  borderRadius: '0',
+                  marginBottom: '16px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
+                }}>
+                  <div style={{ fontWeight: 'normal', marginBottom: '8px', color: '#6a1b9a' }}>
+                    📝 Question 2:
+                  </div>
+                  <div style={{ color: '#7b1fa2' }}>
+                    Which of the following are actions that <strong>{userType1}</strong> should be able to take?
+                  </div>
+                </div>
+
+                {isGeneratingActions ? (
+                  <div style={{
+                    padding: '16px',
+                    textAlign: 'center',
+                    color: '#7b1fa2',
+                    fontSize: '13px'
+                  }}>
+                    Generating action options...
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: '16px' }}>
+                    {actionOptions.map((action, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '10px 12px',
+                          marginBottom: '8px',
+                          background: '#fff',
+                          border: selectedActions.includes(action) ? '1px solid #6a1b9a' : '1px solid #ccc',
+                          borderRadius: '0',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          fontSize: '13px',
+                          fontFamily: 'system-ui, -apple-system, sans-serif'
+                        }}
+                        onClick={() => toggleAction(action)}
+                      >
+                        <div style={{
+                          width: '16px',
+                          height: '16px',
+                          border: '1px solid #6a1b9a',
+                          borderRadius: '0',
+                          background: selectedActions.includes(action) ? '#6a1b9a' : '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#fff',
+                          fontSize: '11px',
+                          fontWeight: 'normal',
+                          flexShrink: 0
+                        }}>
+                          {selectedActions.includes(action) ? '✓' : ''}
+                        </div>
+                        <div style={{ color: '#333' }}>
+                          {action}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Question 3: Free response for stakeholder 2 */}
+            {hasSubmitted && userType2.trim() !== '' && actionOptions.length > 0 && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{
+                  padding: '12px',
+                  background: '#f3e5f5',
+                  border: '1px solid #ba68c8',
+                  borderRadius: '0',
+                  marginBottom: '12px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
+                }}>
+                  <div style={{ fontWeight: 'normal', marginBottom: '8px', color: '#6a1b9a' }}>
+                    📝 Question 3:
+                  </div>
+                  <div style={{ color: '#7b1fa2' }}>
+                    What are the actions that <strong>{userType2}</strong> should be able to take? List them separated by commas.
+                  </div>
+                </div>
+                <textarea
+                  value={stakeholder2Actions}
+                  onChange={(e) => setStakeholder2Actions(e.target.value)}
+                  placeholder="e.g., Action 1, Action 2, Action 3"
+                  style={{
+                    width: '100%',
+                    minHeight: '80px',
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '0',
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Question 4: Free response for stakeholder 3 */}
+            {hasSubmitted && userType3.trim() !== '' && actionOptions.length > 0 && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{
+                  padding: '12px',
+                  background: '#f3e5f5',
+                  border: '1px solid #ba68c8',
+                  borderRadius: '0',
+                  marginBottom: '12px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
+                }}>
+                  <div style={{ fontWeight: 'normal', marginBottom: '8px', color: '#6a1b9a' }}>
+                    📝 Question 4:
+                  </div>
+                  <div style={{ color: '#7b1fa2' }}>
+                    What are the actions that <strong>{userType3}</strong> should be able to take? List them separated by commas.
+                  </div>
+                </div>
+                <textarea
+                  value={stakeholder3Actions}
+                  onChange={(e) => setStakeholder3Actions(e.target.value)}
+                  placeholder="e.g., Action 1, Action 2, Action 3"
+                  style={{
+                    width: '100%',
+                    minHeight: '80px',
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '0',
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* MCQ: Scenario question about closed restaurant */}
+            {hasSubmitted && actionOptions.length > 0 && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{
+                  padding: '12px',
+                  background: '#f3e5f5',
+                  border: '1px solid #ba68c8',
+                  borderRadius: '0',
+                  marginBottom: '12px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
+                }}>
+                  <div style={{ fontWeight: 'normal', marginBottom: '8px', color: '#6a1b9a' }}>
+                    📝 Question 5:
+                  </div>
+                  <div style={{ color: '#7b1fa2' }}>
+                    Suppose the owner marked the restaurant as closed on a Sunday night. What should happen on the diner's side if they attempt to book a reservation for that night?
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '8px' }}>
+                  {scenarioOptions.map((option) => (
+                    <div
+                      key={option.id}
+                      style={{
+                        padding: '10px 12px',
+                        marginBottom: '8px',
+                        background: '#fff',
+                        border: selectedScenarioAnswer === option.id ? '1px solid #6a1b9a' : '1px solid #ccc',
+                        borderRadius: '0',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        fontSize: '13px',
+                        fontFamily: 'system-ui, -apple-system, sans-serif'
+                      }}
+                      onClick={() => setSelectedScenarioAnswer(option.id)}
+                    >
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '1px solid #6a1b9a',
+                        borderRadius: '50%',
+                        background: selectedScenarioAnswer === option.id ? '#6a1b9a' : '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        marginTop: '2px'
+                      }}>
+                        {selectedScenarioAnswer === option.id && (
+                          <div style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: '#fff'
+                          }} />
+                        )}
+                      </div>
+                      <div style={{ color: '#333', flex: 1 }}>
+                        {option.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Question 6: Cancelling existing reservation scenario */}
+            {hasSubmitted && actionOptions.length > 0 && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{
+                  padding: '12px',
+                  background: '#f5f5f5',
+                  border: '1px solid #ccc',
+                  borderRadius: '0',
+                  marginBottom: '12px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
+                }}>
+                  <div style={{ fontWeight: 'normal', marginBottom: '8px', color: '#333' }}>
+                    Question 6:
+                  </div>
+                  <div style={{ color: '#666' }}>
+                    Now consider that the diner had already made a reservation for Sunday night and the owner had to cancel last minute after the reservation was booked. What should happen?
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '8px' }}>
+                  {cancellationOptions.map((option) => (
+                    <div
+                      key={option.id}
+                      style={{
+                        padding: '10px 12px',
+                        marginBottom: '8px',
+                        background: '#fff',
+                        border: selectedCancellationAnswer === option.id ? '2px solid #333' : '1px solid #ccc',
+                        borderRadius: '0',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        fontSize: '13px',
+                        fontFamily: 'system-ui, -apple-system, sans-serif'
+                      }}
+                      onClick={() => setSelectedCancellationAnswer(option.id)}
+                    >
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '1px solid #333',
+                        borderRadius: '50%',
+                        background: selectedCancellationAnswer === option.id ? '#333' : '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        marginTop: '2px'
+                      }}>
+                        {selectedCancellationAnswer === option.id && (
+                          <div style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: '#fff'
+                          }} />
+                        )}
+                      </div>
+                      <div style={{ color: '#333', flex: 1 }}>
+                        {option.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Question 7: Important information to collect */}
+            {hasSubmitted && actionOptions.length > 0 && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{
+                  padding: '12px',
+                  background: '#f5f5f5',
+                  border: '1px solid #ccc',
+                  borderRadius: '0',
+                  marginBottom: '12px',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
+                }}>
+                  <div style={{ fontWeight: 'normal', marginBottom: '8px', color: '#333' }}>
+                    Question 7:
+                  </div>
+                  <div style={{ color: '#666' }}>
+                    Which of the following information from the diner would be most important to collect to offer this functionality?
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '8px' }}>
+                  {infoOptions.map((option) => (
+                    <div
+                      key={option.id}
+                      style={{
+                        padding: '10px 12px',
+                        marginBottom: '8px',
+                        background: '#fff',
+                        border: selectedInfoAnswer === option.id ? '2px solid #333' : '1px solid #ccc',
+                        borderRadius: '0',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        fontSize: '13px',
+                        fontFamily: 'system-ui, -apple-system, sans-serif'
+                      }}
+                      onClick={() => setSelectedInfoAnswer(option.id)}
+                    >
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '1px solid #333',
+                        borderRadius: '50%',
+                        background: selectedInfoAnswer === option.id ? '#333' : '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        marginTop: '2px'
+                      }}>
+                        {selectedInfoAnswer === option.id && (
+                          <div style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: '#fff'
+                          }} />
+                        )}
+                      </div>
+                      <div style={{ color: '#333', flex: 1 }}>
+                        {option.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Reservation;

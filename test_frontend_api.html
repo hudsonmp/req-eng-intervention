@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Connection</title>
+</head>
+<body>
+    <h1>Testing Backend API</h1>
+    <button onclick="testAPI()">Test Study ID 1</button>
+    <button onclick="testAPI2()">Test Study ID 5</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAPI() {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Testing Study ID 1...';
+
+            try {
+                const response = await fetch('http://localhost:8000/study/1/type');
+                const data = await response.json();
+                resultEl.textContent = `Study 1:\nStatus: ${response.status}\nType: ${data.type}`;
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testAPI2() {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Testing Study ID 5...';
+
+            try {
+                const response = await fetch('http://localhost:8000/study/5/type');
+                const data = await response.json();
+                resultEl.textContent = `Study 5:\nStatus: ${response.status}\nType: ${data.type}`;
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
