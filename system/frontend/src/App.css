@@ -13,13 +13,82 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
 }
 
-.container {
-  flex: 1;
+.simulation-container {
+  width: 50%;
   background-color: #ffffff;
-  padding: 30px 0;
-  color: #000000;
+  border-right: 1px solid #ccc;
+  overflow: auto;
 }
 
-.container-3 {
-  padding-top: 0;
+.chat-container {
+  width: 50%;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+/* LaTeX compiled document styles */
+.latex-document {
+  font-family: 'Computer Modern', 'Latin Modern', 'Times New Roman', serif;
+  line-height: 1.6;
+  color: #000;
+}
+
+.latex-document h1,
+.latex-document h2,
+.latex-document h3,
+.latex-document h4,
+.latex-document h5,
+.latex-document h6 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+
+.latex-document p {
+  margin-bottom: 1em;
+  text-align: justify;
+}
+
+.latex-document .center {
+  text-align: center;
+}
+
+.latex-document .abstract {
+  margin: 2em 3em;
+  font-size: 0.95em;
+}
+
+.latex-document .section {
+  margin-top: 1.5em;
+}
+
+.latex-document .subsection {
+  margin-top: 1.2em;
+}
+
+.latex-document ul,
+.latex-document ol {
+  margin-left: 2em;
+  margin-bottom: 1em;
+}
+
+.latex-document li {
+  margin-bottom: 0.3em;
+}
+
+.latex-document .title {
+  font-size: 1.8em;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.5em;
+}
+
+.latex-document .author {
+  text-align: center;
+  margin-bottom: 0.3em;
+}
+
+.latex-document .date {
+  text-align: center;
+  margin-bottom: 2em;
 }
