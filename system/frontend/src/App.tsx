@@ -1663,7 +1663,14 @@ function LearnModePage() {
   const [isSending, setIsSending] = useState(false);
   const [currentAgentData, setCurrentAgentData] = useState<any>(null);
   const [testInput, setTestInput] = useState('');
-  const [testResults, setTestResults] = useState<Array<{test: string, result: string}>>([]);
+  const [generatedCode, setGeneratedCode] = useState<any>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [lastTestResult, setLastTestResult] = useState<{test: string, description: string, note: string} | null>(null);
+  const [requirements, setRequirements] = useState<Array<{text: string, confirmed: boolean}>>([]);
+  const [newRequirement, setNewRequirement] = useState('');
+  const [reflectionText, setReflectionText] = useState('');
+  const [reflections, setReflections] = useState<Array<{test: string, reflection: string}>>([]);
+  const [promptResponses, setPromptResponses] = useState({ users: '', dataClasses: '', guarantees: '' });
   const { user, elapsedMinutes } = React.useContext(AppContext);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -1692,6 +1699,30 @@ function LearnModePage() {
         .catch(err => console.error('Failed to load initial message:', err));
     }
   }, [showIntro]);
+
+  // Load persisted state from localStorage
+  useEffect(() => {
+    if (user) {
+      const saved = localStorage.getItem(`learn_state_${user.id}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.requirements) setRequirements(parsed.requirements);
+          if (parsed.reflections) setReflections(parsed.reflections);
+          if (parsed.promptResponses) setPromptResponses(parsed.promptResponses);
+        } catch {}
+      }
+    }
+  }, [user]);
+
+  // Save state to localStorage on changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(`learn_state_${user.id}`, JSON.stringify({
+        requirements, reflections, promptResponses
+      }));
+    }
+  }, [user, requirements, reflections, promptResponses]);
 
   const handleSendMessage = async () => {
     if (!chatMessage.trim() || !user || isSending) return;
@@ -1747,73 +1778,86 @@ function LearnModePage() {
     }
   };
 
-  const handleRunTest = () => {
-    if (!testInput.trim()) return;
-    const newTest = testInput.trim();
-    setTestResults(prev => [...prev, { test: newTest, result: 'pending' }]);
+  const handleTranslateTest = async () => {
+    if (!testInput.trim() || !user || isTranslating) return;
+    setIsTranslating(true);
+    const testDescription = testInput.trim();
     setTestInput('');
-    // Send test as a chat message to the AI for processing
-    setChatMessage(`I want to run this test: ${newTest}`);
-    setTimeout(() => handleSendMessage(), 100);
+    try {
+      const response = await fetch(`${API_URL}/chat/translate-test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, message: testDescription })
+      });
+      const data = await response.json();
+      if (data.success && data.test_code) {
+        setGeneratedCode(data.test_code);
+        setCurrentAgentData(data.test_code);
+        setLastTestResult({ test: testDescription, description: data.description || '', note: data.note || '' });
+      }
+    } catch (error) {
+      console.error('Test translation error:', error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handleAddRequirement = () => {
+    if (!newRequirement.trim()) return;
+    setRequirements(prev => [...prev, { text: newRequirement.trim(), confirmed: false }]);
+    setNewRequirement('');
+  };
+
+  const toggleRequirement = (idx: number) => {
+    setRequirements(prev => prev.map((r, i) => i === idx ? { ...r, confirmed: !r.confirmed } : r));
+  };
+
+  const removeRequirement = (idx: number) => {
+    setRequirements(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSaveReflection = () => {
+    if (!reflectionText.trim()) return;
+    setReflections(prev => [...prev, { test: lastTestResult?.test || 'General observation', reflection: reflectionText.trim() }]);
+    setReflectionText('');
   };
 
   const parseLocation = (location: string): { x: number, y: number } | null => {
     if (!location) return null;
-    
     const coordMatch = location.match(/\((\d+),\s*(\d+)\)/);
     if (coordMatch) {
       return { x: parseInt(coordMatch[1]), y: parseInt(coordMatch[2]) };
     }
-    
-    const milesMatch = location.match(/(\d+(?:\.\d+)?)\s*miles?/);
-    if (milesMatch) {
-      const miles = parseFloat(milesMatch[1]);
-      return { x: Math.floor(miles * 3), y: 15 };
-    }
-    
     return null;
   };
 
-  const getAgentColor = (agentName: string) => {
-    if (agentName.includes('_1')) return 'blue';
-    if (agentName.includes('_2')) return 'red';
-    if (agentName.includes('_3')) return 'green';
-    return 'black';
+  const getAgentColor = (agentName: string): string => {
+    if (agentName.includes('rider')) return '#2196f3';
+    if (agentName.includes('vehicle')) return '#f44336';
+    return '#333';
   };
 
-  const getAgentIcon = (agentName: string) => {
-    if (agentName.startsWith('rider')) return '/icons/rider.svg';
-    if (agentName.startsWith('vehicle')) return '/icons/vehicle.svg';
-    if (agentName.startsWith('system')) return '/icons/system.svg';
-    return null;
+  const getAgentLabel = (agentName: string): string => {
+    if (agentName.startsWith('rider')) return 'R' + (agentName.match(/\d+/)?.[0] || '');
+    if (agentName.startsWith('vehicle')) return 'V' + (agentName.match(/\d+/)?.[0] || '');
+    return agentName[0].toUpperCase();
   };
 
   const renderAgentsOnGrid = () => {
     if (!currentAgentData) return null;
-
     const agents: any[] = [];
-    
     Object.keys(currentAgentData).forEach((agentName) => {
       const agentAttrs = currentAgentData[agentName];
       let location: { x: number; y: number } | null = null;
-      
       if (agentAttrs.pickup_location) {
         location = parseLocation(agentAttrs.pickup_location);
       } else if (agentAttrs.car_cur_location) {
         location = parseLocation(agentAttrs.car_cur_location);
       }
-      
       if (location && location.x < 30 && location.y < 30) {
-        agents.push({
-          name: agentName,
-          location,
-          icon: getAgentIcon(agentName),
-          color: getAgentColor(agentName),
-          attrs: agentAttrs
-        });
+        agents.push({ name: agentName, location, color: getAgentColor(agentName), label: getAgentLabel(agentName), attrs: agentAttrs });
       }
     });
-
     return agents;
   };
 
@@ -1874,253 +1918,266 @@ function LearnModePage() {
     );
   }
 
+  const CELL = 14;
+  const GRID = 30;
+
+  const sectionHeader = (text: string) => (
+    <div style={{ fontSize: '11px', fontWeight: 700, color: '#333', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: '8px', paddingBottom: '4px', borderBottom: '1px solid #e0e0e0' }}>
+      {text}
+    </div>
+  );
+
   return (
-    <div className="app">
-      <div className="simulation-container">
-        <div style={{ padding: '20px' }}>
-          <h3 style={{ marginTop: '0', marginBottom: '12px', fontSize: '14px', color: '#000000' }}>
-            Rideshare Simulation
-          </h3>
-          <div style={{ position: 'relative', width: 'fit-content' }}>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(30, 1fr)', 
-              gridTemplateRows: 'repeat(30, 1fr)',
-              gap: '0px',
-              width: 'fit-content',
-              backgroundColor: '#f9f9f9'
-            }}>
-              {Array.from({ length: 900 }, (_, i) => (
-                <div 
-                  key={i} 
-                  style={{ 
-                    borderRight: '1px solid #d0d0d0',
-                    borderBottom: '1px solid #d0d0d0',
-                    backgroundColor: '#ffffff',
-                    width: '20px',
-                    height: '20px'
-                  }}
-                />
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif', backgroundColor: '#f8f8f8' }}>
+
+      {/* === LEFT PANEL: Dialogue with Alex (35%) === */}
+      <div style={{ width: '35%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #d0d0d0', backgroundColor: '#fff' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '32px', height: '32px', backgroundColor: '#007bff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', fontWeight: 700 }}>A</div>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 600 }}>Alex</div>
+              <div style={{ fontSize: '11px', color: '#888' }}>CS1 Student</div>
+            </div>
+          </div>
+          <div style={{ fontSize: '11px', color: '#888', padding: '3px 8px', border: '1px solid #ddd', borderRadius: '3px' }}>{elapsedMinutes} min</div>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px', backgroundColor: '#fafafa' }}>
+          {chatHistory.map((msg, idx) => (
+            <div key={idx} style={{ marginBottom: '10px', display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+              <div style={{
+                padding: '8px 12px',
+                backgroundColor: msg.sender === 'user' ? '#007bff' : '#e8e8e8',
+                color: msg.sender === 'user' ? '#fff' : '#000',
+                fontSize: '13px',
+                maxWidth: '85%',
+                borderRadius: '4px',
+                whiteSpace: 'pre-wrap' as const,
+                lineHeight: '1.4'
+              }}>
+                {msg.text}
+                {msg.pairs && Object.keys(msg.pairs).length > 0 && (
+                  <div style={{ marginTop: '6px', fontSize: '10px', opacity: 0.7, borderTop: msg.sender === 'user' ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(0,0,0,0.15)', paddingTop: '4px' }}>
+                    Test data updated on grid
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          <div ref={chatEndRef} />
+        </div>
+
+        <div style={{ padding: '12px', borderTop: '1px solid #e0e0e0', display: 'flex', gap: '8px' }}>
+          <input
+            type="text"
+            value={chatMessage}
+            onChange={(e) => setChatMessage(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && !isSending && handleSendMessage()}
+            placeholder="Message Alex..."
+            disabled={isSending}
+            style={{ flex: 1, padding: '8px 10px', fontSize: '13px', border: '1px solid #ccc', outline: 'none', borderRadius: '3px' }}
+          />
+          <button
+            onClick={handleSendMessage}
+            disabled={isSending}
+            style={{ padding: '8px 16px', fontSize: '12px', border: 'none', backgroundColor: isSending ? '#ccc' : '#007bff', color: '#fff', cursor: isSending ? 'not-allowed' : 'pointer', borderRadius: '3px' }}
+          >
+            {isSending ? '...' : 'Send'}
+          </button>
+        </div>
+      </div>
+
+      {/* === CENTER PANEL: Simulation + Test Spec (40%) === */}
+      <div style={{ width: '40%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #d0d0d0', backgroundColor: '#fff', overflowY: 'auto' }}>
+        <div style={{ padding: '16px' }}>
+          {sectionHeader('Simulation Grid')}
+          <div style={{ position: 'relative', width: 'fit-content', margin: '0 auto 16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${GRID}, 1fr)`, gap: '0px', width: 'fit-content', border: '1px solid #ccc' }}>
+              {Array.from({ length: GRID * GRID }, (_, i) => (
+                <div key={i} style={{ borderRight: '1px solid #e8e8e8', borderBottom: '1px solid #e8e8e8', backgroundColor: '#fff', width: `${CELL}px`, height: `${CELL}px` }} />
               ))}
             </div>
-            
             {agentsToDisplay && agentsToDisplay.map((agent, idx) => (
               <div
                 key={idx}
                 style={{
                   position: 'absolute',
-                  left: `${agent.location.x * 20}px`,
-                  top: `${agent.location.y * 20}px`,
-                  width: '20px',
-                  height: '20px',
+                  left: `${agent.location.x * CELL + 1}px`,
+                  top: `${agent.location.y * CELL + 1}px`,
+                  width: `${CELL}px`,
+                  height: `${CELL}px`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  pointerEvents: 'none'
+                  backgroundColor: agent.color,
+                  color: '#fff',
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  borderRadius: '2px',
+                  pointerEvents: 'none' as const
                 }}
                 title={`${agent.name}: ${JSON.stringify(agent.attrs)}`}
               >
-                {agent.icon && (
-                  <img 
-                    src={agent.icon}
-                    alt={agent.name}
-                    style={{
-                      width: '18px',
-                      height: '18px',
-                      filter: agent.color === 'blue' ? 'invert(27%) sepia(98%) saturate(7471%) hue-rotate(211deg) brightness(98%) contrast(107%)' :
-                              agent.color === 'red' ? 'invert(18%) sepia(97%) saturate(7491%) hue-rotate(357deg) brightness(95%) contrast(118%)' :
-                              agent.color === 'green' ? 'invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%)' :
-                              'none'
-                    }}
-                  />
-                )}
+                {agent.label}
               </div>
             ))}
           </div>
-          
+
           {currentAgentData && Object.keys(currentAgentData).length > 0 && (
-            <div style={{ marginTop: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#000' }}>Current Test:</div>
-                <button
-                  onClick={() => setCurrentAgentData(null)}
-                  style={{
-                    padding: '2px 8px',
-                    fontSize: '10px',
-                    border: '1px solid #ccc',
-                    backgroundColor: 'white',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Clear Grid
-                </button>
+            <div style={{ marginBottom: '16px', padding: '8px', backgroundColor: '#f5f5f5', border: '1px solid #e0e0e0', fontSize: '11px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontWeight: 600 }}>Current Scenario:</span>
+                <button onClick={() => { setCurrentAgentData(null); setGeneratedCode(null); }} style={{ fontSize: '10px', border: '1px solid #ccc', backgroundColor: '#fff', padding: '1px 6px', cursor: 'pointer' }}>Clear</button>
               </div>
-              <div style={{ fontSize: '11px', color: '#666' }}>
-                {Object.keys(currentAgentData).map((agentName) => (
-                  <div key={agentName} style={{ marginBottom: '2px' }}>
-                    <span style={{ fontWeight: 'bold' }}>{agentName}:</span>{' '}
-                    {Object.entries(currentAgentData[agentName]).map(([key, value]) =>
-                      `${key}=${JSON.stringify(value)}`
-                    ).join(', ')}
-                  </div>
-                ))}
-              </div>
+              {Object.entries(currentAgentData).map(([name, attrs]: [string, any]) => (
+                <div key={name} style={{ color: '#555' }}>
+                  <span style={{ fontWeight: 600, color: getAgentColor(name) }}>{name}:</span>{' '}
+                  {Object.entries(attrs).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(', ')}
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Natural Language Test Specification */}
-          <div style={{ marginTop: '16px', borderTop: '1px solid #ddd', paddingTop: '12px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#000', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-              Specify Tests in Natural Language
-            </div>
+          {sectionHeader('Specify Tests in Natural Language')}
+          <div style={{ marginBottom: '12px' }}>
             <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
               <input
                 type="text"
                 value={testInput}
                 onChange={(e) => setTestInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleRunTest()}
+                onKeyPress={(e) => e.key === 'Enter' && handleTranslateTest()}
                 placeholder="e.g., Two riders at equal distance, Rider 1 requested first..."
-                style={{
-                  flex: 1,
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                  border: '1px solid #ccc',
-                  outline: 'none',
-                  fontFamily: 'inherit'
-                }}
+                disabled={isTranslating}
+                style={{ flex: 1, padding: '8px 10px', fontSize: '12px', border: '1px solid #ccc', outline: 'none', borderRadius: '3px', fontFamily: 'inherit' }}
               />
               <button
-                onClick={handleRunTest}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '11px',
-                  border: '1px solid #007bff',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap'
-                }}
+                onClick={handleTranslateTest}
+                disabled={isTranslating}
+                style={{ padding: '8px 14px', fontSize: '11px', border: 'none', backgroundColor: isTranslating ? '#ccc' : '#28a745', color: '#fff', cursor: isTranslating ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' as const, borderRadius: '3px', fontWeight: 600 }}
               >
-                Run Test
+                {isTranslating ? 'Translating...' : 'Run Test'}
               </button>
             </div>
-            {testResults.length > 0 && (
-              <div style={{ fontSize: '11px', color: '#666', maxHeight: '100px', overflowY: 'auto' }}>
-                {testResults.map((t, i) => (
-                  <div key={i} style={{ marginBottom: '3px', padding: '3px 6px', backgroundColor: '#f9f9f9', border: '1px solid #eee' }}>
-                    <span style={{ fontWeight: 'bold' }}>Test:</span> {t.test}
+          </div>
+
+          {generatedCode && (
+            <>
+              {sectionHeader('Generated Test Code')}
+              <pre style={{ backgroundColor: '#1e1e1e', color: '#d4d4d4', padding: '12px', fontSize: '11px', overflow: 'auto', marginBottom: '16px', borderRadius: '3px', lineHeight: '1.4' }}>
+                {JSON.stringify(generatedCode, null, 2)}
+              </pre>
+            </>
+          )}
+
+          {lastTestResult && (
+            <>
+              {sectionHeader('Last Test Result')}
+              <div style={{ padding: '10px', backgroundColor: '#f0f7ff', border: '1px solid #b8d4f0', fontSize: '12px', marginBottom: '16px', borderRadius: '3px' }}>
+                <div><strong>Test:</strong> {lastTestResult.test}</div>
+                {lastTestResult.description && <div style={{ marginTop: '4px' }}><strong>Result:</strong> {lastTestResult.description}</div>}
+                {lastTestResult.note && (
+                  <div style={{ marginTop: '4px', color: '#856404', backgroundColor: '#fff3cd', padding: '4px 8px', border: '1px solid #ffc107', borderRadius: '2px' }}>
+                    <strong>Note:</strong> {lastTestResult.note}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* === RIGHT PANEL: Requirements + Reflections (25%) === */}
+      <div style={{ width: '25%', display: 'flex', flexDirection: 'column', backgroundColor: '#fff', overflowY: 'auto' }}>
+        <div style={{ padding: '16px' }}>
+
+          {sectionHeader('Scaffolding Prompts')}
+          <div style={{ marginBottom: '20px' }}>
+            {[
+              { key: 'users', label: 'Who are the users of this system?' },
+              { key: 'dataClasses', label: 'What data does each user type have?' },
+              { key: 'guarantees', label: 'What should the matching logic guarantee?' }
+            ].map(({ key, label }) => (
+              <div key={key} style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#333', marginBottom: '4px' }}>{label}</div>
+                <textarea
+                  value={promptResponses[key as keyof typeof promptResponses]}
+                  onChange={(e) => setPromptResponses(prev => ({ ...prev, [key]: e.target.value }))}
+                  style={{ width: '100%', minHeight: '48px', padding: '6px 8px', fontSize: '12px', border: '1px solid #ccc', resize: 'vertical' as const, fontFamily: 'inherit', borderRadius: '3px' }}
+                  placeholder="Your thoughts..."
+                />
+              </div>
+            ))}
+          </div>
+
+          {sectionHeader('Discovered Requirements')}
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+              <input
+                type="text"
+                value={newRequirement}
+                onChange={(e) => setNewRequirement(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddRequirement()}
+                placeholder="Add a requirement..."
+                style={{ flex: 1, padding: '6px 8px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '3px' }}
+              />
+              <button
+                onClick={handleAddRequirement}
+                style={{ padding: '6px 10px', fontSize: '11px', border: 'none', backgroundColor: '#007bff', color: '#fff', cursor: 'pointer', borderRadius: '3px', fontWeight: 600 }}
+              >
+                +
+              </button>
+            </div>
+            {requirements.length === 0 && (
+              <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic' }}>No requirements documented yet</div>
+            )}
+            {requirements.map((req, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', padding: '4px 6px', backgroundColor: req.confirmed ? '#e8f5e9' : '#fff8e1', border: `1px solid ${req.confirmed ? '#a5d6a7' : '#ffe082'}`, borderRadius: '3px', fontSize: '12px' }}>
+                <button
+                  onClick={() => toggleRequirement(idx)}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '14px', padding: '0', lineHeight: '1' }}
+                >
+                  {req.confirmed ? '\u2713' : '?'}
+                </button>
+                <span style={{ flex: 1 }}>{req.text}</span>
+                <button
+                  onClick={() => removeRequirement(idx)}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '0' }}
+                >
+                  \u00d7
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {sectionHeader('Reflection')}
+          <div>
+            <div style={{ fontSize: '12px', color: '#555', marginBottom: '6px' }}>What did this test reveal about the system's requirements?</div>
+            <textarea
+              value={reflectionText}
+              onChange={(e) => setReflectionText(e.target.value)}
+              style={{ width: '100%', minHeight: '60px', padding: '6px 8px', fontSize: '12px', border: '1px solid #ccc', resize: 'vertical' as const, fontFamily: 'inherit', borderRadius: '3px', marginBottom: '6px' }}
+              placeholder="Write your reflection..."
+            />
+            <button
+              onClick={handleSaveReflection}
+              disabled={!reflectionText.trim()}
+              style={{ padding: '6px 12px', fontSize: '11px', border: 'none', backgroundColor: reflectionText.trim() ? '#6c757d' : '#ccc', color: '#fff', cursor: reflectionText.trim() ? 'pointer' : 'not-allowed', borderRadius: '3px', fontWeight: 600, marginBottom: '12px' }}
+            >
+              Save Reflection
+            </button>
+
+            {reflections.length > 0 && (
+              <div style={{ marginTop: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: '#666', marginBottom: '6px' }}>Saved Reflections ({reflections.length})</div>
+                {reflections.map((r, idx) => (
+                  <div key={idx} style={{ marginBottom: '8px', padding: '8px', backgroundColor: '#f5f5f5', border: '1px solid #e0e0e0', fontSize: '11px', borderRadius: '3px' }}>
+                    <div style={{ fontWeight: 600, color: '#333', marginBottom: '3px' }}>After: {r.test}</div>
+                    <div style={{ color: '#555' }}>{r.reflection}</div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-        </div>
-      </div>
-
-      <div className="chat-container">
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          height: '100%',
-          padding: '20px'
-        }}>
-          <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                backgroundColor: '#007bff',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '18px',
-                fontWeight: 'bold'
-              }}>
-                A
-              </div>
-              <div>
-                <h3 style={{ marginTop: '0', marginBottom: '4px', fontSize: '14px', color: '#000000' }}>
-                  Alex
-                </h3>
-                <div style={{ fontSize: '12px', color: '#666' }}>CS1 Student</div>
-              </div>
-            </div>
-            <div style={{ fontSize: '12px', color: '#666', padding: '4px 8px', border: '1px solid #ddd' }}>
-              {elapsedMinutes} min
-            </div>
-          </div>
-          <div style={{ 
-            flex: 1, 
-            border: '1px solid #ccc', 
-            padding: '10px',
-            overflowY: 'auto',
-            marginBottom: '10px',
-            backgroundColor: '#fafafa'
-          }}>
-            {chatHistory.map((msg, idx) => (
-              <div key={idx} style={{ 
-                marginBottom: '8px',
-                textAlign: msg.sender === 'user' ? 'right' : 'left'
-              }}>
-                <div style={{
-                  display: 'inline-block',
-                  padding: '6px 10px',
-                  backgroundColor: msg.sender === 'user' ? '#007bff' : '#e0e0e0',
-                  color: msg.sender === 'user' ? '#ffffff' : '#000000',
-                  fontSize: '13px',
-                  maxWidth: '80%',
-                  textAlign: 'left',
-                  whiteSpace: 'pre-wrap'
-                }}>
-                  {msg.text}
-                  {msg.pairs && Object.keys(msg.pairs).length > 0 && (
-                    <div style={{
-                      marginTop: '4px',
-                      fontSize: '10px',
-                      opacity: 0.7,
-                      borderTop: msg.sender === 'user' ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(0,0,0,0.2)',
-                      paddingTop: '4px'
-                    }}>
-                      📊 Test data visualized on grid
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <input
-              type="text"
-              value={chatMessage}
-              onChange={(e) => setChatMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !isSending && handleSendMessage()}
-              placeholder="Type a message..."
-              disabled={isSending}
-              style={{
-                flex: 1,
-                padding: '8px',
-                fontSize: '13px',
-                border: '1px solid #ccc',
-                outline: 'none'
-              }}
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={isSending}
-              style={{
-                padding: '8px 16px',
-                fontSize: '13px',
-                border: '1px solid #007bff',
-                backgroundColor: isSending ? '#ccc' : '#007bff',
-                color: 'white',
-                cursor: isSending ? 'not-allowed' : 'pointer'
-              }}
-            >
-              {isSending ? 'Sending...' : 'Send'}
-            </button>
           </div>
         </div>
       </div>

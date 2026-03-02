@@ -185,6 +185,64 @@ async def chat_init():
     }
 
 
+@app.post("/chat/translate-test")
+async def translate_test(data: ChatMessage):
+    """Translate a natural language test into structured agent-attribute pairs."""
+    translate_prompt = """You are a test case translator for a rideshare matching simulation.
+
+Given a natural language test description, output ONLY a JSON object with the following structure.
+
+AGENTS:
+- rider_N: pickup_location "(x,y)", destination "(x,y)", request_time (int minutes), accessible (bool)
+- vehicle_N: car_cur_location "(x,y)", occupied (bool), accessible (bool)
+
+Coordinates are (x, y) integers 0-29 for a 30x30 grid.
+
+Output format (JSON only, no other text):
+{
+  "test_code": { ...agents with their attributes... },
+  "description": "Brief description of what this test checks and expected behavior",
+  "note": "What requirement or edge case this test targets"
+}"""
+
+    try:
+        response = anthropic_client.messages.create(
+            model="claude-sonnet-4-6-20250514",
+            max_tokens=1024,
+            system=translate_prompt,
+            messages=[{
+                "role": "user",
+                "content": data.message
+            }]
+        )
+
+        reply_text = ""
+        for block in response.content:
+            if block.type == "text":
+                reply_text = block.text
+
+        import re
+        result = {}
+        try:
+            result = json.loads(reply_text)
+        except Exception:
+            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', reply_text, re.DOTALL)
+            if json_match:
+                result = json.loads(json_match.group(1))
+
+        return {
+            "success": True,
+            "test_code": result.get("test_code", {}),
+            "description": result.get("description", ""),
+            "note": result.get("note", "")
+        }
+    except Exception as e:
+        print(f"ERROR in /chat/translate-test: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/auth/register")
 async def register_user(user: UserRegistration):
     """Register or login UCSD subject"""
