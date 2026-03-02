@@ -1659,18 +1659,15 @@ function PostAssessmentPage() {
 function LearnModePage() {
   const [showIntro, setShowIntro] = useState(true);
   const [chatMessage, setChatMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState<Array<{sender: string, text: string, pairs?: any}>>([]);
+  const [chatHistory, setChatHistory] = useState<Array<{
+    sender: string, text: string, pairs?: any,
+    messageType?: string, missingDataTypes?: string[], discoveredRequirements?: string[]
+  }>>([]);
   const [isSending, setIsSending] = useState(false);
   const [currentAgentData, setCurrentAgentData] = useState<any>(null);
-  const [testInput, setTestInput] = useState('');
-  const [generatedCode, setGeneratedCode] = useState<any>(null);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [lastTestResult, setLastTestResult] = useState<{test: string, description: string, note: string} | null>(null);
-  const [requirements, setRequirements] = useState<Array<{text: string, confirmed: boolean}>>([]);
-  const [newRequirement, setNewRequirement] = useState('');
-  const [reflectionText, setReflectionText] = useState('');
-  const [reflections, setReflections] = useState<Array<{test: string, reflection: string}>>([]);
-  const [promptResponses, setPromptResponses] = useState({ users: '', dataClasses: '', guarantees: '' });
+  // Workspace state
+  const [scratchpad, setScratchpad] = useState('');
+  const [notes, setNotes] = useState<Array<{id: string, timestamp: number, tag?: string, content: string}>>([]);
   const { user, elapsedMinutes } = React.useContext(AppContext);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -1689,7 +1686,10 @@ function LearnModePage() {
             setChatHistory([{
               sender: 'assistant',
               text: data.reply,
-              pairs: data.agent_attribute_pairs
+              pairs: data.agent_attribute_pairs,
+              messageType: data.message_type || 'test_scenario',
+              missingDataTypes: data.missing_data_types || [],
+              discoveredRequirements: data.discovered_requirements || []
             }]);
             if (data.agent_attribute_pairs && Object.keys(data.agent_attribute_pairs).length > 0) {
               setCurrentAgentData(data.agent_attribute_pairs);
@@ -1700,29 +1700,26 @@ function LearnModePage() {
     }
   }, [showIntro]);
 
-  // Load persisted state from localStorage
+  // Load workspace from localStorage
   useEffect(() => {
     if (user) {
-      const saved = localStorage.getItem(`learn_state_${user.id}`);
+      const saved = localStorage.getItem(`learn_workspace_${user.id}`);
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (parsed.requirements) setRequirements(parsed.requirements);
-          if (parsed.reflections) setReflections(parsed.reflections);
-          if (parsed.promptResponses) setPromptResponses(parsed.promptResponses);
+          if (parsed.scratchpad) setScratchpad(parsed.scratchpad);
+          if (parsed.notes) setNotes(parsed.notes);
         } catch {}
       }
     }
   }, [user]);
 
-  // Save state to localStorage on changes
+  // Save workspace to localStorage
   useEffect(() => {
     if (user) {
-      localStorage.setItem(`learn_state_${user.id}`, JSON.stringify({
-        requirements, reflections, promptResponses
-      }));
+      localStorage.setItem(`learn_workspace_${user.id}`, JSON.stringify({ scratchpad, notes }));
     }
-  }, [user, requirements, reflections, promptResponses]);
+  }, [user, scratchpad, notes]);
 
   const handleSendMessage = async () => {
     if (!chatMessage.trim() || !user || isSending) return;
@@ -1734,15 +1731,20 @@ function LearnModePage() {
     setChatHistory(prev => [...prev, { sender: 'user', text: userMessage }]);
 
     try {
+      // Build conversation history for context
+      const history = chatHistory.slice(-20).map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      }));
+
       const response = await fetch(`${API_URL}/chat/send`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: user.id,
           message: userMessage,
-          timestamp_minutes: elapsedMinutes
+          timestamp_minutes: elapsedMinutes,
+          history
         })
       });
 
@@ -1755,7 +1757,10 @@ function LearnModePage() {
         setChatHistory(prev => [...prev, {
           sender: 'assistant',
           text: displayText,
-          pairs: data.agent_attribute_pairs
+          pairs: data.agent_attribute_pairs,
+          messageType: data.message_type || 'clarification',
+          missingDataTypes: data.missing_data_types || [],
+          discoveredRequirements: data.discovered_requirements || []
         }]);
 
         if (data.agent_attribute_pairs && Object.keys(data.agent_attribute_pairs).length > 0) {
@@ -1778,48 +1783,17 @@ function LearnModePage() {
     }
   };
 
-  const handleTranslateTest = async () => {
-    if (!testInput.trim() || !user || isTranslating) return;
-    setIsTranslating(true);
-    const testDescription = testInput.trim();
-    setTestInput('');
-    try {
-      const response = await fetch(`${API_URL}/chat/translate-test`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id, message: testDescription })
-      });
-      const data = await response.json();
-      if (data.success && data.test_code) {
-        setGeneratedCode(data.test_code);
-        setCurrentAgentData(data.test_code);
-        setLastTestResult({ test: testDescription, description: data.description || '', note: data.note || '' });
-      }
-    } catch (error) {
-      console.error('Test translation error:', error);
-    } finally {
-      setIsTranslating(false);
-    }
+  const addToWorkspace = (content: string, tag?: string) => {
+    setNotes(prev => [...prev, {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      tag,
+      content
+    }]);
   };
 
-  const handleAddRequirement = () => {
-    if (!newRequirement.trim()) return;
-    setRequirements(prev => [...prev, { text: newRequirement.trim(), confirmed: false }]);
-    setNewRequirement('');
-  };
-
-  const toggleRequirement = (idx: number) => {
-    setRequirements(prev => prev.map((r, i) => i === idx ? { ...r, confirmed: !r.confirmed } : r));
-  };
-
-  const removeRequirement = (idx: number) => {
-    setRequirements(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  const handleSaveReflection = () => {
-    if (!reflectionText.trim()) return;
-    setReflections(prev => [...prev, { test: lastTestResult?.test || 'General observation', reflection: reflectionText.trim() }]);
-    setReflectionText('');
+  const removeNote = (id: string) => {
+    setNotes(prev => prev.filter(n => n.id !== id));
   };
 
   const parseLocation = (location: string): { x: number, y: number } | null => {
@@ -1835,6 +1809,18 @@ function LearnModePage() {
     if (agentName.includes('rider')) return '#2196f3';
     if (agentName.includes('vehicle')) return '#f44336';
     return '#333';
+  };
+
+  const getAgentIcon = (agentName: string): string => {
+    if (agentName.startsWith('rider')) return '/icons/rider.svg';
+    if (agentName.startsWith('vehicle')) return '/icons/vehicle.svg';
+    return '/icons/system.svg';
+  };
+
+  const getAgentFilter = (agentName: string): string => {
+    if (agentName.includes('rider')) return 'invert(42%) sepia(93%) saturate(1352%) hue-rotate(196deg) brightness(100%) contrast(101%)';
+    if (agentName.includes('vehicle')) return 'invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)';
+    return 'none';
   };
 
   const getAgentLabel = (agentName: string): string => {
@@ -1855,7 +1841,7 @@ function LearnModePage() {
         location = parseLocation(agentAttrs.car_cur_location);
       }
       if (location && location.x < 30 && location.y < 30) {
-        agents.push({ name: agentName, location, color: getAgentColor(agentName), label: getAgentLabel(agentName), attrs: agentAttrs });
+        agents.push({ name: agentName, location, color: getAgentColor(agentName), icon: getAgentIcon(agentName), filter: getAgentFilter(agentName), label: getAgentLabel(agentName), attrs: agentAttrs });
       }
     });
     return agents;
@@ -1918,7 +1904,7 @@ function LearnModePage() {
     );
   }
 
-  const CELL = 14;
+  const CELL = 20;
   const GRID = 30;
 
   const sectionHeader = (text: string) => (
@@ -1926,6 +1912,115 @@ function LearnModePage() {
       {text}
     </div>
   );
+
+  // Tag colors for workspace notes
+  const tagColors: Record<string, {bg: string, border: string, text: string}> = {
+    requirement: { bg: '#e8f5e9', border: '#a5d6a7', text: '#2e7d32' },
+    'test-idea': { bg: '#e3f2fd', border: '#90caf9', text: '#1565c0' },
+    observation: { bg: '#fff8e1', border: '#ffe082', text: '#f57f17' },
+  };
+
+  // Structured chat card renderer
+  const renderChatMessage = (msg: typeof chatHistory[0], idx: number) => {
+    if (msg.sender === 'user') {
+      return (
+        <div key={idx} style={{ marginBottom: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ padding: '8px 12px', backgroundColor: '#007bff', color: '#fff', fontSize: '13px', maxWidth: '85%', borderRadius: '4px', whiteSpace: 'pre-wrap' as const, lineHeight: '1.4' }}>
+            {msg.text}
+          </div>
+        </div>
+      );
+    }
+
+    // Determine card style based on messageType
+    const mtype = msg.messageType || 'clarification';
+    const cardStyles: Record<string, {borderColor: string, bgColor: string, label: string}> = {
+      probe: { borderColor: '#ff9800', bgColor: '#fff8e1', label: 'NEEDS INPUT' },
+      test_scenario: { borderColor: '#4caf50', bgColor: '#f1f8e9', label: 'TEST SCENARIO' },
+      discovery: { borderColor: '#2196f3', bgColor: '#e3f2fd', label: 'REQUIREMENT DISCOVERED' },
+      clarification: { borderColor: '#e0e0e0', bgColor: '#f5f5f5', label: '' },
+    };
+    const style = cardStyles[mtype] || cardStyles.clarification;
+
+    // For plain clarification, render a simple bubble
+    if (mtype === 'clarification') {
+      return (
+        <div key={idx} style={{ marginBottom: '10px', display: 'flex', justifyContent: 'flex-start' }}>
+          <div style={{ padding: '8px 12px', backgroundColor: '#e8e8e8', color: '#000', fontSize: '13px', maxWidth: '85%', borderRadius: '4px', whiteSpace: 'pre-wrap' as const, lineHeight: '1.4' }}>
+            {msg.text}
+            {msg.pairs && Object.keys(msg.pairs).length > 0 && (
+              <div style={{ marginTop: '6px', fontSize: '10px', opacity: 0.7, borderTop: '1px solid rgba(0,0,0,0.15)', paddingTop: '4px' }}>
+                Grid updated
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Structured card for probe, test_scenario, discovery
+    return (
+      <div key={idx} style={{ marginBottom: '12px', maxWidth: '90%' }}>
+        <div style={{ borderLeft: `3px solid ${style.borderColor}`, backgroundColor: style.bgColor, borderRadius: '0 4px 4px 0', overflow: 'hidden' }}>
+          {/* Card header */}
+          <div style={{ padding: '6px 12px', borderBottom: `1px solid ${style.borderColor}20`, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '10px', fontWeight: 700, color: style.borderColor, textTransform: 'uppercase' as const, letterSpacing: '0.5px' }}>
+              {style.label}
+            </span>
+          </div>
+          {/* Card body */}
+          <div style={{ padding: '10px 12px', fontSize: '13px', lineHeight: '1.5', whiteSpace: 'pre-wrap' as const, color: '#333' }}>
+            {msg.text}
+          </div>
+          {/* Missing data chips for probes */}
+          {mtype === 'probe' && msg.missingDataTypes && msg.missingDataTypes.length > 0 && (
+            <div style={{ padding: '6px 12px 10px', display: 'flex', gap: '6px', flexWrap: 'wrap' as const }}>
+              {msg.missingDataTypes.map((dt, i) => (
+                <span key={i} style={{ fontSize: '11px', padding: '2px 8px', backgroundColor: '#fff3e0', border: '1px solid #ffcc80', borderRadius: '12px', color: '#e65100' }}>
+                  ? {dt}
+                </span>
+              ))}
+            </div>
+          )}
+          {/* Test scenario JSON preview */}
+          {mtype === 'test_scenario' && msg.pairs && Object.keys(msg.pairs).length > 0 && (
+            <div style={{ padding: '0 12px 10px' }}>
+              <pre style={{ backgroundColor: '#263238', color: '#aed581', padding: '8px', fontSize: '10px', borderRadius: '3px', overflow: 'auto', maxHeight: '120px', margin: 0 }}>
+                {JSON.stringify(msg.pairs, null, 2)}
+              </pre>
+            </div>
+          )}
+          {/* Discovered requirements */}
+          {mtype === 'discovery' && msg.discoveredRequirements && msg.discoveredRequirements.length > 0 && (
+            <div style={{ padding: '0 12px 10px' }}>
+              {msg.discoveredRequirements.map((req, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '12px', color: '#1565c0', flex: 1 }}>{req}</span>
+                  <button
+                    onClick={() => addToWorkspace(req, 'requirement')}
+                    style={{ fontSize: '10px', padding: '2px 8px', border: '1px solid #90caf9', backgroundColor: '#e3f2fd', color: '#1565c0', cursor: 'pointer', borderRadius: '3px', whiteSpace: 'nowrap' as const }}
+                  >
+                    + Save
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Save test to workspace button */}
+          {mtype === 'test_scenario' && msg.pairs && Object.keys(msg.pairs).length > 0 && (
+            <div style={{ padding: '0 12px 8px' }}>
+              <button
+                onClick={() => addToWorkspace(`Test: ${msg.text.slice(0, 80)}...\n${JSON.stringify(msg.pairs, null, 2)}`, 'test-idea')}
+                style={{ fontSize: '10px', padding: '2px 8px', border: '1px solid #a5d6a7', backgroundColor: '#e8f5e9', color: '#2e7d32', cursor: 'pointer', borderRadius: '3px' }}
+              >
+                + Save to Workspace
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif', backgroundColor: '#f8f8f8' }}>
@@ -1944,27 +2039,7 @@ function LearnModePage() {
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px', backgroundColor: '#fafafa' }}>
-          {chatHistory.map((msg, idx) => (
-            <div key={idx} style={{ marginBottom: '10px', display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
-              <div style={{
-                padding: '8px 12px',
-                backgroundColor: msg.sender === 'user' ? '#007bff' : '#e8e8e8',
-                color: msg.sender === 'user' ? '#fff' : '#000',
-                fontSize: '13px',
-                maxWidth: '85%',
-                borderRadius: '4px',
-                whiteSpace: 'pre-wrap' as const,
-                lineHeight: '1.4'
-              }}>
-                {msg.text}
-                {msg.pairs && Object.keys(msg.pairs).length > 0 && (
-                  <div style={{ marginTop: '6px', fontSize: '10px', opacity: 0.7, borderTop: msg.sender === 'user' ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(0,0,0,0.15)', paddingTop: '4px' }}>
-                    Test data updated on grid
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+          {chatHistory.map((msg, idx) => renderChatMessage(msg, idx))}
           <div ref={chatEndRef} />
         </div>
 
@@ -1974,7 +2049,7 @@ function LearnModePage() {
             value={chatMessage}
             onChange={(e) => setChatMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && !isSending && handleSendMessage()}
-            placeholder="Message Alex..."
+            placeholder="Message Alex (describe tests, ask questions, define requirements)..."
             disabled={isSending}
             style={{ flex: 1, padding: '8px 10px', fontSize: '13px', border: '1px solid #ccc', outline: 'none', borderRadius: '3px' }}
           />
@@ -1988,7 +2063,7 @@ function LearnModePage() {
         </div>
       </div>
 
-      {/* === CENTER PANEL: Simulation + Test Spec (40%) === */}
+      {/* === CENTER PANEL: Simulation Grid (40%) === */}
       <div style={{ width: '40%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #d0d0d0', backgroundColor: '#fff', overflowY: 'auto' }}>
         <div style={{ padding: '16px' }}>
           {sectionHeader('Simulation Grid')}
@@ -2010,16 +2085,15 @@ function LearnModePage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: agent.color,
-                  color: '#fff',
-                  fontSize: '9px',
-                  fontWeight: 700,
-                  borderRadius: '2px',
                   pointerEvents: 'none' as const
                 }}
                 title={`${agent.name}: ${JSON.stringify(agent.attrs)}`}
               >
-                {agent.label}
+                <img
+                  src={agent.icon}
+                  alt={agent.label}
+                  style={{ width: `${CELL - 2}px`, height: `${CELL - 2}px`, filter: agent.filter }}
+                />
               </div>
             ))}
           </div>
@@ -2028,7 +2102,7 @@ function LearnModePage() {
             <div style={{ marginBottom: '16px', padding: '8px', backgroundColor: '#f5f5f5', border: '1px solid #e0e0e0', fontSize: '11px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span style={{ fontWeight: 600 }}>Current Scenario:</span>
-                <button onClick={() => { setCurrentAgentData(null); setGeneratedCode(null); }} style={{ fontSize: '10px', border: '1px solid #ccc', backgroundColor: '#fff', padding: '1px 6px', cursor: 'pointer' }}>Clear</button>
+                <button onClick={() => setCurrentAgentData(null)} style={{ fontSize: '10px', border: '1px solid #ccc', backgroundColor: '#fff', padding: '1px 6px', cursor: 'pointer' }}>Clear</button>
               </div>
               {Object.entries(currentAgentData).map(([name, attrs]: [string, any]) => (
                 <div key={name} style={{ color: '#555' }}>
@@ -2038,147 +2112,67 @@ function LearnModePage() {
               ))}
             </div>
           )}
-
-          {sectionHeader('Specify Tests in Natural Language')}
-          <div style={{ marginBottom: '12px' }}>
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-              <input
-                type="text"
-                value={testInput}
-                onChange={(e) => setTestInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleTranslateTest()}
-                placeholder="e.g., Two riders at equal distance, Rider 1 requested first..."
-                disabled={isTranslating}
-                style={{ flex: 1, padding: '8px 10px', fontSize: '12px', border: '1px solid #ccc', outline: 'none', borderRadius: '3px', fontFamily: 'inherit' }}
-              />
-              <button
-                onClick={handleTranslateTest}
-                disabled={isTranslating}
-                style={{ padding: '8px 14px', fontSize: '11px', border: 'none', backgroundColor: isTranslating ? '#ccc' : '#28a745', color: '#fff', cursor: isTranslating ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' as const, borderRadius: '3px', fontWeight: 600 }}
-              >
-                {isTranslating ? 'Translating...' : 'Run Test'}
-              </button>
-            </div>
-          </div>
-
-          {generatedCode && (
-            <>
-              {sectionHeader('Generated Test Code')}
-              <pre style={{ backgroundColor: '#1e1e1e', color: '#d4d4d4', padding: '12px', fontSize: '11px', overflow: 'auto', marginBottom: '16px', borderRadius: '3px', lineHeight: '1.4' }}>
-                {JSON.stringify(generatedCode, null, 2)}
-              </pre>
-            </>
-          )}
-
-          {lastTestResult && (
-            <>
-              {sectionHeader('Last Test Result')}
-              <div style={{ padding: '10px', backgroundColor: '#f0f7ff', border: '1px solid #b8d4f0', fontSize: '12px', marginBottom: '16px', borderRadius: '3px' }}>
-                <div><strong>Test:</strong> {lastTestResult.test}</div>
-                {lastTestResult.description && <div style={{ marginTop: '4px' }}><strong>Result:</strong> {lastTestResult.description}</div>}
-                {lastTestResult.note && (
-                  <div style={{ marginTop: '4px', color: '#856404', backgroundColor: '#fff3cd', padding: '4px 8px', border: '1px solid #ffc107', borderRadius: '2px' }}>
-                    <strong>Note:</strong> {lastTestResult.note}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
         </div>
       </div>
 
-      {/* === RIGHT PANEL: Requirements + Reflections (25%) === */}
+      {/* === RIGHT PANEL: Workspace (25%) === */}
       <div style={{ width: '25%', display: 'flex', flexDirection: 'column', backgroundColor: '#fff', overflowY: 'auto' }}>
         <div style={{ padding: '16px' }}>
+          {sectionHeader('Workspace')}
 
-          {sectionHeader('Scaffolding Prompts')}
-          <div style={{ marginBottom: '20px' }}>
-            {[
-              { key: 'users', label: 'Who are the users of this system?' },
-              { key: 'dataClasses', label: 'What data does each user type have?' },
-              { key: 'guarantees', label: 'What should the matching logic guarantee?' }
-            ].map(({ key, label }) => (
-              <div key={key} style={{ marginBottom: '10px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#333', marginBottom: '4px' }}>{label}</div>
-                <textarea
-                  value={promptResponses[key as keyof typeof promptResponses]}
-                  onChange={(e) => setPromptResponses(prev => ({ ...prev, [key]: e.target.value }))}
-                  style={{ width: '100%', minHeight: '48px', padding: '6px 8px', fontSize: '12px', border: '1px solid #ccc', resize: 'vertical' as const, fontFamily: 'inherit', borderRadius: '3px' }}
-                  placeholder="Your thoughts..."
-                />
-              </div>
-            ))}
-          </div>
-
-          {sectionHeader('Discovered Requirements')}
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-              <input
-                type="text"
-                value={newRequirement}
-                onChange={(e) => setNewRequirement(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddRequirement()}
-                placeholder="Add a requirement..."
-                style={{ flex: 1, padding: '6px 8px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '3px' }}
-              />
+          <textarea
+            value={scratchpad}
+            onChange={(e) => setScratchpad(e.target.value)}
+            style={{ width: '100%', minHeight: '120px', padding: '8px', fontSize: '12px', border: '1px solid #ccc', resize: 'vertical' as const, fontFamily: 'inherit', borderRadius: '3px', marginBottom: '8px', lineHeight: '1.5' }}
+            placeholder="Write notes, draft test ideas, document requirements..."
+          />
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
+            {(['requirement', 'test-idea', 'observation'] as const).map(tag => (
               <button
-                onClick={handleAddRequirement}
-                style={{ padding: '6px 10px', fontSize: '11px', border: 'none', backgroundColor: '#007bff', color: '#fff', cursor: 'pointer', borderRadius: '3px', fontWeight: 600 }}
+                key={tag}
+                onClick={() => { if (scratchpad.trim()) { addToWorkspace(scratchpad.trim(), tag); setScratchpad(''); } }}
+                disabled={!scratchpad.trim()}
+                style={{
+                  flex: 1, padding: '4px 6px', fontSize: '10px', border: `1px solid ${tagColors[tag]?.border || '#ccc'}`,
+                  backgroundColor: scratchpad.trim() ? (tagColors[tag]?.bg || '#f5f5f5') : '#f5f5f5',
+                  color: scratchpad.trim() ? (tagColors[tag]?.text || '#666') : '#aaa',
+                  cursor: scratchpad.trim() ? 'pointer' : 'not-allowed', borderRadius: '3px', fontWeight: 600
+                }}
               >
-                +
+                + {tag}
               </button>
-            </div>
-            {requirements.length === 0 && (
-              <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic' }}>No requirements documented yet</div>
-            )}
-            {requirements.map((req, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', padding: '4px 6px', backgroundColor: req.confirmed ? '#e8f5e9' : '#fff8e1', border: `1px solid ${req.confirmed ? '#a5d6a7' : '#ffe082'}`, borderRadius: '3px', fontSize: '12px' }}>
-                <button
-                  onClick={() => toggleRequirement(idx)}
-                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '14px', padding: '0', lineHeight: '1' }}
-                >
-                  {req.confirmed ? '\u2713' : '?'}
-                </button>
-                <span style={{ flex: 1 }}>{req.text}</span>
-                <button
-                  onClick={() => removeRequirement(idx)}
-                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '0' }}
-                >
-                  \u00d7
-                </button>
-              </div>
             ))}
           </div>
 
-          {sectionHeader('Reflection')}
-          <div>
-            <div style={{ fontSize: '12px', color: '#555', marginBottom: '6px' }}>What did this test reveal about the system's requirements?</div>
-            <textarea
-              value={reflectionText}
-              onChange={(e) => setReflectionText(e.target.value)}
-              style={{ width: '100%', minHeight: '60px', padding: '6px 8px', fontSize: '12px', border: '1px solid #ccc', resize: 'vertical' as const, fontFamily: 'inherit', borderRadius: '3px', marginBottom: '6px' }}
-              placeholder="Write your reflection..."
-            />
-            <button
-              onClick={handleSaveReflection}
-              disabled={!reflectionText.trim()}
-              style={{ padding: '6px 12px', fontSize: '11px', border: 'none', backgroundColor: reflectionText.trim() ? '#6c757d' : '#ccc', color: '#fff', cursor: reflectionText.trim() ? 'pointer' : 'not-allowed', borderRadius: '3px', fontWeight: 600, marginBottom: '12px' }}
-            >
-              Save Reflection
-            </button>
-
-            {reflections.length > 0 && (
-              <div style={{ marginTop: '8px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 600, color: '#666', marginBottom: '6px' }}>Saved Reflections ({reflections.length})</div>
-                {reflections.map((r, idx) => (
-                  <div key={idx} style={{ marginBottom: '8px', padding: '8px', backgroundColor: '#f5f5f5', border: '1px solid #e0e0e0', fontSize: '11px', borderRadius: '3px' }}>
-                    <div style={{ fontWeight: 600, color: '#333', marginBottom: '3px' }}>After: {r.test}</div>
-                    <div style={{ color: '#555' }}>{r.reflection}</div>
+          {notes.length > 0 && (
+            <>
+              {sectionHeader(`Notes (${notes.length})`)}
+              {notes.map(note => (
+                <div key={note.id} style={{ marginBottom: '8px', padding: '8px', backgroundColor: tagColors[note.tag || '']?.bg || '#f9f9f9', border: `1px solid ${tagColors[note.tag || '']?.border || '#e0e0e0'}`, borderRadius: '3px', fontSize: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    {note.tag && (
+                      <span style={{ fontSize: '9px', fontWeight: 700, color: tagColors[note.tag]?.text || '#666', textTransform: 'uppercase' as const, letterSpacing: '0.3px' }}>
+                        {note.tag}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => removeNote(note.id)}
+                      style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '0' }}
+                    >
+                      \u00d7
+                    </button>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <div style={{ color: '#333', whiteSpace: 'pre-wrap' as const, lineHeight: '1.4' }}>{note.content}</div>
+                </div>
+              ))}
+            </>
+          )}
+
+          {notes.length === 0 && (
+            <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', textAlign: 'center' as const, padding: '20px 0' }}>
+              Notes you save will appear here. Use the buttons above or "Save" from chat cards.
+            </div>
+          )}
         </div>
       </div>
     </div>

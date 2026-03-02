@@ -35,44 +35,58 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 # System prompt for teachable agent framework
-SYSTEM_PROMPT = """You are "Alex," an AI-simulated CS1 student using the teachable agent framework. You are building a rideshare matching system and need help from a TA (the human participant) because your code has bugs and missing requirements.
+SYSTEM_PROMPT = """You are "Alex," a CS1 student building a rideshare matching system. You need help from a TA (the human) because your code has bugs and missing requirements.
 
-DOMAIN: A city operates autonomous vehicles providing on-demand rides. Passengers request rides via an app; the system matches them to vehicles minimizing wait time and pickup distance.
+DOMAIN: A city operates autonomous vehicles providing on-demand rides. Passengers request rides via an app; the system matches them to vehicles.
 
-YOUR ROLE: You are the student asking for help. You deliberately make three types of errors for the TA to discover through testing:
-1. OMISSION — you leave out required data fields (e.g., no request_time, no is_accessible on vehicles)
-2. COMMISSION — your logic has bugs or ignores boundary cases (e.g., no tie-breaking when distances are equal)
-3. AMBIGUITY — your requirements are underspecified (e.g., "closest vehicle" without defining the distance metric)
+YOUR ROLE: You deliberately make three types of errors for the TA to discover:
+1. OMISSION — you leave out required data fields (e.g., no request_time, no is_accessible)
+2. COMMISSION — your logic has bugs (e.g., no tie-breaking when distances are equal)
+3. AMBIGUITY — your requirements are underspecified (e.g., "closest vehicle" without defining distance metric)
 
-You do NOT fill in gaps yourself. If the TA's instructions are ambiguous, you interpret them literally (even incorrectly) to force them to be precise.
+You do NOT fill in gaps yourself. If the TA's instructions are ambiguous, interpret them literally (even incorrectly) to force precision.
 
-AGENTS IN THE SYSTEM:
-- Riders (up to 5): pickup_location, destination, request_time, accessible, eta_destination
-- Vehicles (up to 3): car_cur_location, pickup_distance, occupied, assigned_other, eta_car, accessible, distance_dropoff
-- System: the matching orchestrator
+POSSIBLE AGENT ATTRIBUTES (introduce only when the TA explicitly defines them):
+- Riders: pickup_location, destination, request_time, accessible, eta_destination
+- Vehicles: car_cur_location, pickup_distance, occupied, assigned_other, eta_car, accessible, distance_dropoff
 
-PROGRESSION: Start simple (just distance between one car and one rider), then gradually increase complexity as the TA helps you discover more requirements. Introduce new attributes only when the TA's feedback reveals they're needed.
+PROGRESSION: Start simple (one car, one rider, just location). Add complexity only when the TA's feedback reveals new requirements are needed.
 
-PEDAGOGY: Every question you ask must serve a purpose — either surfacing a missing requirement, exposing a boundary condition, or testing whether the TA's fix actually resolves the issue. Never ask rhetorical questions. Always propose a concrete test scenario.
+WHEN THE TA PROPOSES A TEST:
+Before generating test data, check whether your currently defined schema supports it. If the test implies data types you haven't defined yet, you MUST:
+1. Set message_type to "probe"
+2. Ask specifically what data you need: "I don't know how to compute [concept] — what information do I need to track?"
+3. Do NOT silently invent fields. Wait for the TA to state the requirement.
 
-TESTS: When you or the TA propose a test, describe it in natural language like:
-"Test: Two riders at equal distance from one vehicle, but Rider 1 requested first. Expected: Rider 1 gets assigned."
-Then include the structured data so it can be visualized.
+Example: If TA says "make them equidistant" but you only have pickup_location (no distance metric defined), ask: "I have pickup locations as coordinates, but how should I measure distance? Manhattan distance? Euclidean? I need you to tell me."
 
-CRITICAL FORMAT — Every response MUST include both:
+WHEN THE TA DEFINES A NEW REQUIREMENT:
+Set message_type to "discovery" and acknowledge what you learned. Include the requirement in discovered_requirements.
+
+CRITICAL FORMAT — Every response MUST include:
 1. Your conversational message to the TA
-2. A JSON code block with the current test scenario's agent-attribute-value pairs
+2. A JSON code block with this exact envelope structure:
 
 ```json
 {
-  "rider_1": { "pickup_location": "(x, y)", ... },
-  "vehicle_1": { "car_cur_location": "(x, y)", ... }
+  "message_type": "probe|test_scenario|clarification|discovery",
+  "agents": {
+    "rider_1": { "pickup_location": "(x, y)" },
+    "vehicle_1": { "car_cur_location": "(x, y)" }
+  },
+  "missing_data_types": [],
+  "discovered_requirements": []
 }
 ```
 
-Coordinates are (x, y) integers 0–29 for the simulation grid. Example: Airport "(15, 15)", 1 mile north "(15, 12)", 2 miles east "(21, 15)".
+message_type values:
+- "probe" — you need information from the TA before you can proceed
+- "test_scenario" — you have enough info to present a test with agent data
+- "discovery" — the TA just taught you something new (a requirement)
+- "clarification" — general discussion, no test data needed (agents can be empty {})
 
-Keep messages concise. You are a confused but earnest student, not a lecturer."""
+Coordinates are (x, y) integers 0–29 for the 30x30 grid.
+Keep messages concise. You are confused but earnest, not a lecturer."""
 
 
 # Initial message from the teachable agent (sent before any user input)
@@ -80,20 +94,25 @@ INITIAL_MESSAGE = """Hi! I'm Alex, and I'm in CS 101. I'm trying to build a ride
 
 Here's what I have so far: a city with autonomous vehicles that pick up passengers. When someone requests a ride, my system is supposed to match them with the closest available vehicle. But I'm getting weird results and I think my matching logic might be broken.
 
-Can I walk you through a simple test case? I have one vehicle parked near the airport and one rider requesting a pickup. Let me show you what I mean:
+Can I walk you through a simple test case? I have one vehicle and one rider. Let me show you what I mean:
 
 ```json
 {
-  "rider_1": {
-    "pickup_location": "(15, 20)"
+  "message_type": "test_scenario",
+  "agents": {
+    "rider_1": {
+      "pickup_location": "(15, 20)"
+    },
+    "vehicle_1": {
+      "car_cur_location": "(15, 12)"
+    }
   },
-  "vehicle_1": {
-    "car_cur_location": "(15, 12)"
-  }
+  "missing_data_types": [],
+  "discovered_requirements": []
 }
 ```
 
-The vehicle is about 8 blocks north of the rider. My system says it should be assigned — does that seem right to you? I want to make sure my basic matching works before I add more riders."""
+The vehicle is about 8 blocks away from the rider. My system says it should be assigned — does that seem right to you? I want to make sure my basic matching works before I add more riders."""
 
 
 class UserRegistration(BaseModel):
@@ -105,12 +124,16 @@ class ChatMessage(BaseModel):
     user_id: str  # UUID from ucsd_subjects table
     message: str
     timestamp_minutes: Optional[int] = None  # How many minutes into the study
+    history: Optional[List[Dict[str, str]]] = None  # prior conversation turns
 
 
 class ChatResponse(BaseModel):
     reply: str
     agent_attribute_pairs: Dict[str, Any]
     reasoning: Optional[str] = None
+    message_type: str = "clarification"
+    missing_data_types: List[str] = []
+    discovered_requirements: List[str] = []
 
 
 class ConsentSubmission(BaseModel):
@@ -166,13 +189,20 @@ async def root():
 
 @app.get("/chat/init")
 async def chat_init():
-    """Return the initial teachable agent message and parsed JSON."""
+    """Return the initial teachable agent message and parsed JSON envelope."""
     import re
     agent_attribute_pairs = {}
+    message_type = "test_scenario"
+    missing_data_types = []
+    discovered_requirements = []
     try:
         json_code_block = re.search(r'```json\s*(\{.*?\})\s*```', INITIAL_MESSAGE, re.DOTALL)
         if json_code_block:
-            agent_attribute_pairs = json.loads(json_code_block.group(1))
+            parsed = json.loads(json_code_block.group(1))
+            agent_attribute_pairs = parsed.get("agents", parsed)
+            message_type = parsed.get("message_type", "test_scenario")
+            missing_data_types = parsed.get("missing_data_types", [])
+            discovered_requirements = parsed.get("discovered_requirements", [])
     except Exception:
         pass
 
@@ -181,66 +211,11 @@ async def chat_init():
     return {
         "success": True,
         "reply": display_text,
-        "agent_attribute_pairs": agent_attribute_pairs
+        "agent_attribute_pairs": agent_attribute_pairs,
+        "message_type": message_type,
+        "missing_data_types": missing_data_types,
+        "discovered_requirements": discovered_requirements
     }
-
-
-@app.post("/chat/translate-test")
-async def translate_test(data: ChatMessage):
-    """Translate a natural language test into structured agent-attribute pairs."""
-    translate_prompt = """You are a test case translator for a rideshare matching simulation.
-
-Given a natural language test description, output ONLY a JSON object with the following structure.
-
-AGENTS:
-- rider_N: pickup_location "(x,y)", destination "(x,y)", request_time (int minutes), accessible (bool)
-- vehicle_N: car_cur_location "(x,y)", occupied (bool), accessible (bool)
-
-Coordinates are (x, y) integers 0-29 for a 30x30 grid.
-
-Output format (JSON only, no other text):
-{
-  "test_code": { ...agents with their attributes... },
-  "description": "Brief description of what this test checks and expected behavior",
-  "note": "What requirement or edge case this test targets"
-}"""
-
-    try:
-        response = anthropic_client.messages.create(
-            model="claude-sonnet-4-6-20250514",
-            max_tokens=1024,
-            system=translate_prompt,
-            messages=[{
-                "role": "user",
-                "content": data.message
-            }]
-        )
-
-        reply_text = ""
-        for block in response.content:
-            if block.type == "text":
-                reply_text = block.text
-
-        import re
-        result = {}
-        try:
-            result = json.loads(reply_text)
-        except Exception:
-            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', reply_text, re.DOTALL)
-            if json_match:
-                result = json.loads(json_match.group(1))
-
-        return {
-            "success": True,
-            "test_code": result.get("test_code", {}),
-            "description": result.get("description", ""),
-            "note": result.get("note", "")
-        }
-    except Exception as e:
-        print(f"ERROR in /chat/translate-test: {type(e).__name__}: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/auth/register")
@@ -288,22 +263,28 @@ async def register_user(user: UserRegistration):
 
 @app.post("/chat/send")
 async def send_chat_message(chat: ChatMessage):
-    """Send a chat message and get AI response with agent-attribute pairs"""
+    """Send a chat message and get AI response with structured envelope."""
     try:
-        # Build messages (no database, just current message)
+        import re
+
+        # Build messages from conversation history + current message
+        messages = []
+        if chat.history:
+            for turn in chat.history[-20:]:  # cap at last 20 turns
+                messages.append({
+                    "role": turn.get("role", "user"),
+                    "content": turn.get("content", "")
+                })
+
         user_content = chat.message
         if chat.timestamp_minutes is not None:
             user_content = f"[Timestamp: {chat.timestamp_minutes} minutes into study]\n\n{chat.message}"
-        
-        messages = [{
-            "role": "user",
-            "content": user_content
-        }]
-        
+        messages.append({"role": "user", "content": user_content})
+
         # Call Anthropic API with prompt caching
         response = anthropic_client.messages.create(
-            model="claude-sonnet-4-6-20250514",
-            max_tokens=2048,
+            model="claude-sonnet-4-6",
+            max_tokens=4096,
             system=[{
                 "type": "text",
                 "text": SYSTEM_PROMPT,
@@ -312,46 +293,60 @@ async def send_chat_message(chat: ChatMessage):
             messages=messages,
             thinking={
                 "type": "enabled",
-                "budget_tokens": 1024
+                "budget_tokens": 2048
             }
         )
-        
+
         # Extract response content
         reply_text = ""
         thinking_text = ""
-        
         for block in response.content:
             if block.type == "thinking":
                 thinking_text = block.thinking
             elif block.type == "text":
                 reply_text = block.text
-        
-        # Parse JSON from response (expecting agent-attribute pairs in JSON format)
+
+        # Parse JSON envelope from response
         agent_attribute_pairs = {}
+        message_type = "clarification"
+        missing_data_types = []
+        discovered_requirements = []
         try:
-            # Try to extract JSON from markdown code blocks first
-            import re
             json_code_block = re.search(r'```json\s*(\{.*?\})\s*```', reply_text, re.DOTALL)
             if json_code_block:
-                agent_attribute_pairs = json.loads(json_code_block.group(1))
+                parsed = json.loads(json_code_block.group(1))
+                # New envelope format: has "agents" key
+                if "agents" in parsed:
+                    agent_attribute_pairs = parsed["agents"]
+                    message_type = parsed.get("message_type", "clarification")
+                    missing_data_types = parsed.get("missing_data_types", [])
+                    discovered_requirements = parsed.get("discovered_requirements", [])
+                else:
+                    # Fallback: bare agent JSON (rider_1, vehicle_1 at top level)
+                    agent_attribute_pairs = parsed
             else:
                 # Try to find raw JSON object
                 json_match = re.search(r'\{(?:[^{}]|(?:\{[^{}]*\}))*\}', reply_text, re.DOTALL)
                 if json_match:
-                    agent_attribute_pairs = json.loads(json_match.group())
+                    parsed = json.loads(json_match.group())
+                    if "agents" in parsed:
+                        agent_attribute_pairs = parsed["agents"]
+                        message_type = parsed.get("message_type", "clarification")
+                    else:
+                        agent_attribute_pairs = parsed
         except Exception as e:
             print(f"JSON parsing error: {e}")
-            # If no JSON found, return empty dict
-            agent_attribute_pairs = {}
-        
-        # Return response without storing in database
+
         return {
             "success": True,
             "reply": reply_text,
             "agent_attribute_pairs": agent_attribute_pairs,
-            "reasoning": thinking_text if thinking_text else None
+            "reasoning": thinking_text if thinking_text else None,
+            "message_type": message_type,
+            "missing_data_types": missing_data_types,
+            "discovered_requirements": discovered_requirements
         }
-        
+
     except Exception as e:
         print(f"ERROR in /chat/send: {type(e).__name__}: {str(e)}")
         import traceback
