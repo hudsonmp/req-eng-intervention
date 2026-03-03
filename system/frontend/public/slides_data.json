@@ -1,0 +1,3136 @@
+[
+  {
+    "name": "Aiden Nguyen",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The reservation system works in a way where the owner can choose the times when reservations are open to and allow different party sizes. Users can then pick a time and party size depending on if it's available."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Users with a small party",
+          "Users with a medium sized party",
+          "Users with a large sized party"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": "q_51e3e2de.png"
+      },
+      {
+        "number": 7,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "The data types I chose would help improve the reservation system functionality. If smaller party size were more often in the mornings, we would increase the number of available smaller party size tables duing the morning. If a medium sized party were more often during midday, we would increase the number of available medium party size tables during midday. If a large sized party were more often during afternoon, we would increase the number of available large-party-size tables during afternoon."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "the website should update so that when Diner_2 attempts to book it at that time, it wont see a time available."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "the party size will determine who gets what table. If a party of 2 comes in, they would be seated at a table that accommodates 2 people and vice versa."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Akwaeno George",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "A reservation system connects different users\u2014such as customers, staff, and administrators\u2014by allowing customers to request a time or service while the business records and manages that information. Actions by one user affect others: for example, a diner\u2019s booking reduces availability for other customers and informs staff scheduling and preparation."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Alone",
+          "1 partner",
+          "2 partner"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "email",
+          "email",
+          "email"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "Some of the data types are important because they help contact the users to know their seat status"
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "It would be full and they cant book"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "It should compare party sizes and table sizes"
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Alvin Ly",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "guest 1 can just set up a reservation and cancel it and choose the party size"
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "guest 1",
+          "guest 2",
+          "guest 3"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [
+          "a"
+        ],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [
+          "a"
+        ],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [
+          "a"
+        ],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types",
+          "email phone number"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "email phone number",
+          "email phone number",
+          "email phone number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "Key data types like DATETIME (for check-in/out), DECIMAL (for rates), and BOOLEAN (for availability) are critical because they ensure precise, real-time inventory management and accurate financial transactions. I would use structured DATETIME data to implement automated, constraint-based booking checks that prevent double-booking, thereby increasing operational efficiency. Furthermore, by analyzing numerical booking data (e.g., length of stay, guest count) against Boolean availability flags, I can implement dynamic pricing, allowing the system to automatically adjust rates during high-demand periods to maximize revenue."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "Diner 2 shouldn't be able to book it"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "most likely the table of 4 as they can make more money for the business"
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Amirah Bridgwater",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The diner can make a reservation by choosing a time slot and how many guests are coming. The owner can see the available time slots, allowed party sizes, and the reservations that have been made."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Diners",
+          "Owners",
+          "Admins"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [
+          "x"
+        ],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [
+          "x"
+        ],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [
+          "x"
+        ],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Party size",
+          "Name",
+          "Phone number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Email address",
+          "Reservations",
+          "Phone numbers"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "Party sizes",
+          "Reservations",
+          "Time slots"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 10,
+        "texts": [
+          "Diner_2 should not be able to book the table since Diner_1 already did, the system should let diner_2 that they can't book and let them choose a different time"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 11,
+        "texts": [
+          "The system should take the party sizes and the tables and see which party is able to fit at each table"
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 12,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 13,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 14,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 16
+  },
+  {
+    "name": "Anthony Mokhov",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The diner can input what time he wants to come in and how many people are going to come in by making a reservation. This affects the restaurant because it finds out how many people are coming and at what time. The owner is able to see each reservation with how many people at each time."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "The Diner",
+          "The Owner",
+          "Restaurant greeters/workers"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [
+          "X"
+        ],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [
+          "X"
+        ],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [
+          "X"
+        ],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Name",
+          "Name",
+          "Email"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "Phone",
+          "Phone",
+          "Phone Number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "Email",
+          "Email",
+          "Name"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [
+          "Restaurant Name",
+          "Number of people attending"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [
+          "Seating Preference"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "Table number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "Two very important data types are the Phone Number and Email. These allow both the owner and the restaurant workers to contact the diner if they didn't arrive on time or if their reservation would have to be cancelled. Another important data type is seating preference as it allows the restaurant to better seat the diners and be able to know ahead of time where they would like to sit."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "If diner_2 attempts to book the table, the program should tell the diner that this table has already been booked and the user would have to select a different time or a different table. The program might recommend a similar table that the user can book instead."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 15,
+        "texts": [
+          "The program should try to fit all available parties into the restaurant. So if one party is of 4 and the other is of 2 then it should try to fit them into the 2 tables accordingly."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 21,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 21
+  },
+  {
+    "name": "Ashlynn Kirchoff",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "Different users select different times and party sizes. Different users can affect one another if too many people set a reservation and now other guests cannot place it for the same time slot."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "families",
+          "adults",
+          "restaurants"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Email address",
+          "party size",
+          "families",
+          "restaurants",
+          "adults",
+          "Phone number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Knowing families' last names is important to identify families that are booking reservations. Adults phone numbers are crucial for communication with guests to let them know of their reservations and any last minute changes. Restaurants can send in their email addresses to get notifications on rebookings."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "It should not be allowed to be confirmed."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "The table with more seats should seat the bigger group, and then it should process the group of two after."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 12,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 13,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 14,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 15
+  },
+  {
+    "name": "Ayres Wright",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "It works by having the available time slots with all the info then having to check if its available to the reservation ones, similar to if/else and true/false statements."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "younger patrons",
+          "the employees",
+          "online reservationists"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types",
+          "Email, phone number, and usernames."
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Email, and employee identification",
+          "Email and username",
+          "Email and phone number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "Some of the data types I found that were important was the people using the system like younger people, employees, and online people. I would use these like with the user name and email for others. It varied for each person. Some only applied due to their position like with online orders with the usernames."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "It should say that, that table isnt available anymore."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 10,
+        "texts": [
+          "The system should prioritize the one with the bigger party size due to it will be easier to find a table that can fit less people easier."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 12,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 13,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 14,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 16
+  },
+  {
+    "name": "Azarel Hilanto",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "It collects the times and how many of different users will come in by having the user click a button that fills out when they want to reserve for and how many people are in their party. The owner has a panel that limits certain times that the user can reserve for as well as the party size the user can have. So, if users reserve for one time on the owner's side, they could then take off the option of reserving for certain times thus affecting when the next user reserves for and the owner can also change party size limits depending on how many people are in the restaurant at a time."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Users that are alone",
+          "Users with a party of 2",
+          "Users with a party of 3"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [
+          "A"
+        ],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [
+          "A"
+        ],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [
+          "A"
+        ],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Phone number and email address for the same reason of whoever reserves",
+          "Phone number and email address for the same reason of whoever reserves",
+          "Phone number and email address so that they can be contacted if there is an issue"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "The phone number and email address would be very important to keep system functionality as it helps contact the user if there is an issue with the system quickly which thus can avoid a lot of problems for the user, and can give the user a chance to reschedule if need be. Other data types are far less important in terms of just reservation functionality as it doesn't necessarily help the user have a better experience for the most part."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "It shouldn't be an option if it as at the same time but if it is, then there should just be an error with an explanation that it is already booked."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "Whichever group fits in each size of table should go to that size of table."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Bryce Ault",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "A reservation system works by having the customer put in an available time and party size, and then the restaurant updates its available times and tables accordingly"
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Customer",
+          "Restaurant owner",
+          "Waiter"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Party size and time",
+          "Table num and party size",
+          "Phone Number and Email"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "The data types that I defined are important because they provide the restaraunt and its staff with the adequate information to serve customers and it allows them to contact the customer if something happens or to confirm the reservation"
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "The option shouldn't be available to the person who books it second"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "It should be determined by party size, the party of 4 gets the table for 4 and the party of 2 gets the table for 2"
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Dishaan Desai",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The user may put different reservation times as well as different party sizes."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Parents",
+          "People with money",
+          "People who are hungry"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Email, phone number, ID",
+          "Email, phone number, ID",
+          "Email, phone number, ID"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "The data types mentioned are important because they help identify and contact the diner to communicate about wait time, and whether the restaurant will be open or not."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "Diner 2 would be allowed to book it, but they would have to wait until Diner 1 finishes and leaves, or if an identical table becomes available for Diner 2."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "The system will compare party size to the tables that can accommodate that number. The system should sort the two diners into respective tables that fit their party size."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Elena Koleva",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The amount of people that come in to the restaurant will affect the workers and the amount of work they'll have to do. However, this will also affect the restaurant owners because they will gain more profit. If the workers at the restaurant are friendly and leave a good impression on the customers, this will leave the guests feeling glad they dined there, helping the business."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Person having a birthday party",
+          "A large family",
+          "Person who is meeting a friend and wants to secure a spot"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "phone number",
+          "email address",
+          "email address and phone number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "These data types are important because they allow for communication between the restaurant and the diner. For a person having a birthday party, it would be important to have both a phone number and an email address. This would emphasize the importance of the reservationm as well because a birthday party would be more important to keep track of than other regular reservations. Having both data types for all customers would also work because if one form of communication doesn't work, you can try another."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "It shouldn't let diner_2 to book it. It should say \"booking unavailable\"."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "By which table will be available for that time slot. If the table is for 4 people, the party of 4 should get it. If it's for 2, the party of 2 should."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Ethan Jensen",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The reservation system seems to let you reserve any of the available times. You can only have one reservation, with a time on 30 minute intervals between 5pm and 8pm with 1-8 guests."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "A person or group trying to ensure they do not have to wait to get a seat where they want to have dinner",
+          "Someone attempting to hurt the restaurant my reserving tables they will not use, causing a decrease in sales.",
+          "A restaurant trying to ensure they can consistently fill seats and ensure customers are coming at specific times."
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [
+          "x"
+        ],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [
+          "x"
+        ],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [
+          "x"
+        ],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "IP address",
+          "phone number",
+          "trends in demand during certain times"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 7,
+        "texts": [
+          "email address"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "Email and phone are good for contacting, knowing the person's IP address means you can block them from reserving tables, and knowing demand trends will help the restaurant make decisions on how to run their business."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "The code does not show what happens, but the time slot should become unavailable, and thus they would not be able to book the table"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 10,
+        "texts": [
+          "They should try to fit a party into as few tables as possible."
+        ],
+        "questionImage": "q_85f17f52.png"
+      }
+    ],
+    "slideCount": 10
+  },
+  {
+    "name": "Eva Casalins-DeBoskey",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "A dinner reservation system allows different types of users to interact with the same system in different ways. Diners use the system to choose an available time slot and party size, and then submit a reservation request. The system collects this information and checks it against the restaurant\u2019s available settings. Restaurant owners or administrators control the available time slots and allowed party sizes. When an owner changes these settings, it directly affects what options diners can see and select. For example, if a time slot is removed by the owner, diners can no longer reserve that time. Similarly, when a diner books a reservation, it reduces availability for other diners. This shows how actions by one type of user can impact the experience and options of other users in the reservation system."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Dinner / Customer",
+          "Restaurant Owner",
+          "Restaurant Staff / Manager"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": "q_dbace541.png"
+      },
+      {
+        "number": 7,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "Some of the data collected is important because it allows the reservation system to function accurately and efficiently. For example, collecting a diner\u2019s email address and phone number allows the system to send confirmations, reminders, and cancellation notifications. Owner and staff data such as available time slots and table capacity help prevent overbooking and scheduling conflicts. Overall, this data improves communication between users and ensures reservations are handled correctly."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "If there is only one table available and diner 1 successfully books it, the system should immediately mark the table as unavailable. When diner 2 attempts to book the same table, the system should prevent the booking and display a message indicating that the table is no longer available. This prevents double-booking and keeps reservation data accurate."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 10,
+        "texts": [
+          "The system should assign tables based on party size to best fit the diners\u2019 needs. The diner with a party size of two should be assigned the two-person table, and the diner with a party size of four should be assigned the four-person table. This ensures efficient use of space and allows both reservations to be accommodated whenever possible."
+        ],
+        "questionImage": "q_85f17f52.png"
+      }
+    ],
+    "slideCount": 10
+  },
+  {
+    "name": "Gianna Rodriguez",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "Different users can interact with the reservation system, so different parties can make certain sized reservations at certain times. This information of when a reservation is scheduled is then pased to the owners side because they need to know how many people and at what time they will come to the restaurant."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "adults on a date",
+          "adults celebrating an event",
+          "workers at the restaurant"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Phone number, email address, name",
+          "Phone number, email address, name",
+          "name"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "The phone numbers, email, and name are important for the reservation system functionality because they can be used if the restaurant needs to cancel a reservation. In order to reach the diners who wanted to book a reservation, a form of communication is needed to reach out to them. I also think that if an employee is using the system, their name should be tracked because"
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "diner_2 should not be able to book the table, and the time on the diner view should not be an option at all."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 10,
+        "texts": [
+          "The system should differentiate by the party size, and automatically give the party of 2 the smaller table, and the party of 4  larger table."
+        ],
+        "questionImage": "q_85f17f52.png"
+      }
+    ],
+    "slideCount": 10
+  },
+  {
+    "name": "Hyunrin Ryu",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Jack Saegert",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "Depending on the size of a party, the system can filter out guests who are unable to be accommodated, or notify users what time slots are available due to others already being used."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Single Diners",
+          "Friends eating out / Dates",
+          "Large Groups / Parties"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Both Phone Numbers",
+          "Group Size, Lead\u2019s Phone Number",
+          "Phone Number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "Most of the processing can happen in the backend. Really the only thing that needs to be collected is the user's phone/email (for contacting the user in case of changes) and their desired booking time. That way, the interface can be kept as simple and uncluttered as possible, maximising the ratio of ease to use : functionality."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "\"We're sorry, that table has already been booked for the time slot requested.\"",
+          "\"Our next available slot is (Time/Date), or choose a different slot\"",
+          "\"Sorry for the inconvenience\""
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "choose a random user. once picked, find a table that accommodates >= number of guests. the closer the table seats to the number of guests, the better score. the table with the highest score seats that party, and is removed from the available tables. then choose the next person in the list, and repeat. that way, only tables that can support parties of a certain size are chosen, and tables that are too big are disincentivized."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Jacob Le",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The front end of the website has a reservation system that allows the user to interact with the website and choose a time and party size and allows them to confirm their reservation as well as cancel it",
+          "The Admin panel I think is supposed to allow admins, waiters, waitresses to select times that are unavailable as well as available party sizes but it is not working. It does however show the current reservations that have been made correctly"
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Owner",
+          "User",
+          "Tester"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [
+          "x"
+        ],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [
+          "x"
+        ],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Owner:\u000bPhone Number\u000bEmail address\u000bDesired List of times and default Schedule\u000bBusiness contact information\u000bWebsite URL",
+          "User/Customer:\u000bPhone Number, Email, Number of seats desired, Time desired, Name for reservation",
+          "Tester:",
+          "Phone Number, Email, Number of seats desired, Time desired, Name for reservation\u000b(If there is a tester mode add a feedback form)"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Phone Number, Email, Number of seats desired, Time desired, Name for reservation",
+          "Phone Number, Email, Number of seats desired, Time desired, Name for reservation\u000b(If there is a tester mode add a feedback form)",
+          "Phone Number, Email address, Desired List of times and default Schedule Business contact information, Website URL"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [
+          "For the owner contact information is vital whether its the business or personal phone number just in case there are any critical inquiries that require the owner to look at. Website URL would allow more information if this is a restaurant then it would be a menu ect. (unless this app is on the website, I'm assuming we might be on one of those kiosks). The owners desired schedule is very important because it allows the admin panel to be made, and gives the owner a default collection of their normal operating hours.",
+          "Tester and User should almost be the same, as the tester is a mock user, of course phone number and/or email as well as time desired and seats in order to give the user information and allow the user to reserve correctly. Tester should have a final feedback box though is there is a separate tester mode."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "The option should not be in the first place but if it is then once they try to book it it should give an error message or a message to the user that the table is already booked"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "Well we should look at the number of people and compare them the table with the lowest amount of people or 2 or less should get the table of 2 people and over 2 (4 in this case) should get the 4 person table"
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 14,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 19
+  },
+  {
+    "name": "Kaleb Fling",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "It gets a time and amount of people then you can change what time slot are avaible from the admint and limit the part size"
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "family",
+          "date",
+          "want food"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 7,
+        "texts": [
+          "it can message the people if the diner is closed that night. also can tell them when there table is ready."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "they shouldn't be able to book"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "who every submitted first"
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 12,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 13,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 14,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 15
+  },
+  {
+    "name": "Kayla To",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The reservation system allows the user to pick a time slot and party size and confirm a reservation. The user can also cancel the reservation.",
+          "The information collected about the user's time slot and party size is shown in the owner view."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Adults on a date",
+          "Friends hanging out",
+          "Employees of the restaurant"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Email address, phone number, name",
+          "Email address, phone number, name",
+          "Employee ID, customer name"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "The user\u2019s email address and phone number will allow the restaurant to confirm the reservation with the user or remind them of their reservation 3 days in advance. The restaurant will also be able to communicate with the user if something goes wrong. The user\u2019s name will personalize emails or reminders."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "diner_2 should be unavailable to book the table and all reservations should be full"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 10,
+        "texts": [
+          "party size of two gets the table for two people and party size of four gets the table for four people"
+        ],
+        "questionImage": "q_85f17f52.png"
+      }
+    ],
+    "slideCount": 10
+  },
+  {
+    "name": "Mateo Medak",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The reservation system takes the time requested and the party size. On the owener side they can close a certan time or party size if they choose to, so if multiple users make a reservation at 7 with a large party size the owener can choose to close that time slot affecting other users."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "People going on a date",
+          "People needing to book a large party in advance",
+          "People who dont want to wait to be seated"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [
+          "X"
+        ],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [
+          "X"
+        ],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [
+          "X"
+        ],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Email or phone number",
+          "Email or phone number",
+          "Email or phone number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "Having the diners phone number is the best since most people notice when they get a  text message. Having the option for the diner to give their email address rather than their phone number is also a good alternative since some people see their phone number as personal information."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "diner_2 should be unable to book since it has already been booked"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "It should put the party of 2 at the table for 2 and the party of 4 at the table of 4 so there are no wasted seats"
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Max Gershwin",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "when you reserve for a specific time others wont be able to reserve at that time if the resturant will be at capacity which affects other users depending on what time and how many people they bring"
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "reserving for just themselves having a party size of just one",
+          "a person reserving for a party reserving at the maximum size of 8",
+          "a person reserving for a late dinner with a freind rserving at 7:30  pm with a party size of 2"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Email address, phone number (optional), name",
+          "Email address, phone number (optional), name",
+          "Email address, phone number (optional), name"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "the name is important as it allows them to easily look in their system for the reservation and the email address is important to be able to inform them if something happens to their reservation, the phone number is good as some people prefer to be contacted by phone as well as by email but as emailis best to have as a base to ensure there is some way to contact it stays as a requirement'"
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "they should get a notification when they try to saying that the table is already booked and to please select a different time before allowing them to continue"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "the system should check what tables are available and auto assign the one with the closest number of seats to the number of people in the party while getting the minimum number of seating to sit all in the party."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Natalee Ngo",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "Restaurant patrons select a time slot to reserve based on the available choices that the restaurant owner sets. This choice is then used by the restaurant owner to modify or view the reservations."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Restaurant Owner",
+          "Restaurant Diners",
+          "Restaurant Workers"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Phone number, email, guest name, amount in party,",
+          "Email, shift hours",
+          "Restaurant location, hours of operation, amount of reservations available, party sizes allowed"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "Emails are important to get into contact with restaurant patrons. This would make the reservation system more organized and improve usability for guests. The time slots available would also make the system more organized. The amount of people in a party allows the system to better organize patrons at different tables."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "Diner 2 should get a message saying that the table is already booked and they have to book another table or wait for a table to open."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "The party of four that fits only the table of four should be put at the table of four first and then the party of two is placed after."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 20,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 20
+  },
+  {
+    "name": "Nolan Runge",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "They may put in different reservation times as well as different amounts of people for the table reservation."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Hungry People.",
+          "People who are going on a date.",
+          "Parents/families"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "phone number, name, time of reservation",
+          "phone number, name, time of reservation",
+          "phone number, name, time of reservation"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "They are important because you need a way to contact them if something goes wrong. If something does go wrong, the owner will have the time of the reservation and will be able to reschedule or move the time/day. Maybe name to address them by."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "diner_2 would be blocked and wouldn't be able to reserve the table."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 10,
+        "texts": [
+          "It wouldn't really matter if the tables can be moved, but if not, then some tables should be labeled with how many they can hold or reserve."
+        ],
+        "questionImage": "q_85f17f52.png"
+      }
+    ],
+    "slideCount": 10
+  },
+  {
+    "name": "Quan Nguyen",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "Users can select different times to RSVP. When a time is selected and confirmed, the option becomes locked to that specific user and is no longer available to be selected by others. The reservation notifies restaurant staff and gives them information for when the diner wants to come in."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Hungry people.",
+          "Event planners.",
+          "Families."
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Phone number or email address",
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "Phone numbers are a must-have considering everyone has phones nowadays. They're more convenient than email and are guaranteed customer responses. Email addresses are optional for more larger or formal parties, since they'll be online rifling through their schedules anyways. I'd collect user phone numbers and emails to keep track of how many people reserve spots at the restaurant."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "The table becomes unavailable to diner_2 and a pop-up appears stating that \"the table has already been reserved.\""
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 14,
+        "texts": [
+          "The system should choose with an algorithm that places customers at tables closest matching to their party size; striving to have zero or the smallest amount of empty seat remainders. The party of two gets the table of two and the party of four gets the table of four."
+        ],
+        "questionImage": "q_85f17f52.png"
+      }
+    ],
+    "slideCount": 14
+  },
+  {
+    "name": "Ryan Leslie",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "Someone who is making a reservation can input the time for their reservation along with the number of guests that will be attending. A worker at the restaurant will see the reservation(s) that have been made, along with the number of guests and the time of the reservation. They can also see the allowed party sizes and keep track of which times reservations are available."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "A worker",
+          "A guest",
+          "A manager"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Email address, phone number",
+          "Email address, phone number",
+          "Email address, phone number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 7,
+        "texts": [
+          "These data types are important because they enhance communication among workers, guests, and the manager, thereby reducing errors and miscommunication. They improve system functionality by allowing users to communicate freely. Phone numbers, for example, provide a direct line of communication, and talking to someone on the phone is a fast and reliable way to get something done."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "Diner 2 should receive a notification that the table they were trying to book is no longer available and should be able to select a new time slot or date for their reservation."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "There should be a system in place that automatically compares the guest size to the table size and ensures that the number of guests at a table does not exceed the available seating capacity. A confirmation email or text should be sent based on the available information that the guest has given."
+        ],
+        "questionImage": "q_85f17f52.png"
+      }
+    ],
+    "slideCount": 9
+  },
+  {
+    "name": "Salem Kiar",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The reservation system works by asking users for the time slot of their reservation and the number of guests that would be coming. Different users can affect one another as they may fill up a certain time slot or may not have the table necessary for the amount of guests."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Parents",
+          "Companies/businesses",
+          "Teens"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "email address and phone number",
+          "email address and phone number",
+          "email address and phone number"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Some of the data types I identified are important as email and phone number are the best and fastest way of communicating with individuals in this day of age. I could use them to improve the reservation system functionality by establishing a fast connection between customers and restaurant, allowing the restaurant to keep in touch with the users if anything goes wrong."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "When the second diner tries to book, it should notify them that all tables are occupied at the restaurant."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "The system should intake the amount of guests present and check the available tables present. If the available table seat matches the number of guests, then the table should be assigned to that party."
+        ],
+        "questionImage": "q_85f17f52.png"
+      }
+    ],
+    "slideCount": 9
+  },
+  {
+    "name": "Sam Ho",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "In this reservation system, users select what time they want to place a reservation and the number of guests that will accompany them. From the owner's view, it seems they can control the available time slots and party sizes. Once a reservation is placed, it stops the user from making any other reservations.",
+          "The program may prevent other users from placing a reservation at the same time, which can affect different types of users in various ways."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Users who will be accompanied by a large party.",
+          "Users who want to set up a date",
+          "Users who want to plan ahead."
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Phone number, email address",
+          "Phone number, email address",
+          "Phone number, email address"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "This provides the user with the best possible service that is both spontaneous and reliable. They are important becauses it allows us to be connected to the user and be able to update them. It makes the system efficient as well."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "Diner_2 should not be able to book the table."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 10,
+        "texts": [
+          "The program should ask the user how large their party will be. Then, the program should recommend the best table that meets their requirements. For example, if the party size is two, the program should provide the user with a table size of two instead of a table size of four."
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 11,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 12,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 13,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 14,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 16
+  },
+  {
+    "name": "Tristan Patterson",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The restaurant sees the time the people want to come in, and how many people are brought with them. This affects both the availablity of other time slots in the restaruant as well as more people making less occupancy in the restaurant possible. If a reservation is cancelled, it suddenly becomes available without notice."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Mother of a family",
+          "Person on a date",
+          "Lonely chud"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Email address, phone number",
+          "Email address",
+          "Email address, family name"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "The email address is the most important information that a database could collect, being a universal communicator nearly every person has today. This should always attempt to be collected, as it is never not good to have. More specified things like a last name or a phone number act as either identifiers or a second line of communication."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "It should lock them out and deny their request."
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 10,
+        "texts": [
+          "It should sort according to party size, attempting to maximize the space in the restaurant."
+        ],
+        "questionImage": "q_85f17f52.png"
+      }
+    ],
+    "slideCount": 10
+  },
+  {
+    "name": "Violet Waskey",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 7,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 9,
+        "texts": [],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_85f17f52.png"
+      }
+    ],
+    "slideCount": 10
+  },
+  {
+    "name": "Vivyen Le",
+    "slides": [
+      {
+        "number": 1,
+        "texts": [
+          "The reservation system collects the time and party size of each user and when the available time slot is full it wont allow other users to make a reservation for that time."
+        ],
+        "questionImage": "q_3009274f.png"
+      },
+      {
+        "number": 2,
+        "texts": [
+          "Worker",
+          "owner",
+          "Customer"
+        ],
+        "questionImage": "q_66c782f0.png"
+      },
+      {
+        "number": 3,
+        "texts": [],
+        "questionImage": "q_076534ea.png"
+      },
+      {
+        "number": 4,
+        "texts": [],
+        "questionImage": "q_5d4cd9ea.png"
+      },
+      {
+        "number": 5,
+        "texts": [],
+        "questionImage": "q_0b7aa6b4.png"
+      },
+      {
+        "number": 6,
+        "texts": [
+          "Fill out as many as you need for each of your user types"
+        ],
+        "questionImage": null
+      },
+      {
+        "number": 7,
+        "texts": [
+          "Num people",
+          "email, phone number, name"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 8,
+        "texts": [
+          "email, phone number, name"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 9,
+        "texts": [
+          "email, phone number, name"
+        ],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 10,
+        "texts": [],
+        "questionImage": "q_586463c6.png"
+      },
+      {
+        "number": 11,
+        "texts": [
+          "The name is important so that everyone knows who they are referring too. The phone number is important in case the any of the users need to contact each other using a phone number which is easiest to access too. the email could also be useful in case they cant reach through the phone number."
+        ],
+        "questionImage": "q_08055073.png"
+      },
+      {
+        "number": 12,
+        "texts": [
+          "It should tell the user that it is no longer available"
+        ],
+        "questionImage": "q_3941edf3.png"
+      },
+      {
+        "number": 13,
+        "texts": [
+          "it should be determined by the amount of people"
+        ],
+        "questionImage": "q_85f17f52.png"
+      },
+      {
+        "number": 14,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 15,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 16,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 17,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 18,
+        "texts": [],
+        "questionImage": null
+      },
+      {
+        "number": 19,
+        "texts": [],
+        "questionImage": null
+      }
+    ],
+    "slideCount": 19
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=nhttyppkcajodocrnqhi&access_token=sbp_a2faf63f4bb61d4cc00fcef4ff4b5e5b289af29f",
+      "headers": {},
+      "connectionString": "postgresql://postgres:CMU2031SCS!@db.nhttyppkcajodocrnqhi.supabase.co:5432/postgres"
+    }
+  }
+}

@@ -2185,22 +2185,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [studyStartTime, setStudyStartTime] = useState<number | null>(null);
+  const defaultUser: User = { id: 'dev', subject_number: 0, preferred_name: 'Dev' };
+  const [user] = useState<User | null>(defaultUser);
+  const [studyStartTime] = useState<number | null>(Date.now());
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Load auth from localStorage on mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem('study_user');
-    const savedStartTime = localStorage.getItem('study_start_time');
-    
-    if (savedUser && savedStartTime) {
-      setUser(JSON.parse(savedUser));
-      setStudyStartTime(parseInt(savedStartTime));
-    }
-    setIsLoading(false);
-  }, []);
 
   useEffect(() => {
     if (studyStartTime) {
@@ -2208,46 +2196,20 @@ function App() {
         const elapsed = Math.floor((Date.now() - studyStartTime) / 60000);
         setElapsedMinutes(elapsed);
       }, 10000);
-
       return () => clearInterval(interval);
     }
   }, [studyStartTime]);
-
-  const handleLogin = (loggedInUser: User, startTime: number) => {
-    setUser(loggedInUser);
-    setStudyStartTime(startTime);
-    
-    // Save to localStorage
-    localStorage.setItem('study_user', JSON.stringify(loggedInUser));
-    localStorage.setItem('study_start_time', startTime.toString());
-  };
-
-  if (isLoading) {
-    return <div></div>;
-  }
 
   return (
     <AppContext.Provider value={{ user, studyStartTime, elapsedMinutes }}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={
-            user ? <Navigate to="/menu" replace /> : <LoginPage onLogin={handleLogin} />
-          } />
-          <Route path="/menu" element={
-            <ProtectedRoute><NavigationMenu /></ProtectedRoute>
-          } />
-          <Route path="/paperwork" element={
-            <ProtectedRoute><PaperworkPage /></ProtectedRoute>
-          } />
-          <Route path="/pre-assessment" element={
-            <ProtectedRoute><PreAssessmentPage /></ProtectedRoute>
-          } />
-          <Route path="/learn" element={
-            <ProtectedRoute><LearnModePage /></ProtectedRoute>
-          } />
-          <Route path="/post-assessment" element={
-            <ProtectedRoute><PostAssessmentPage /></ProtectedRoute>
-          } />
+          <Route path="/" element={<Navigate to="/menu" replace />} />
+          <Route path="/menu" element={<NavigationMenu />} />
+          <Route path="/paperwork" element={<PaperworkPage />} />
+          <Route path="/pre-assessment" element={<PreAssessmentPage />} />
+          <Route path="/learn" element={<LearnModePage />} />
+          <Route path="/post-assessment" element={<PostAssessmentPage />} />
           <Route path="/slides" element={<SlideViewer />} />
           <Route path="/mockup" element={<MockupPage />} />
         </Routes>
