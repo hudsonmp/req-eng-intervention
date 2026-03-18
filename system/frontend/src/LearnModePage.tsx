@@ -394,6 +394,31 @@ export function LearnModePage() {
     observation: { bg: '#fff8e1', border: '#ffe082', text: '#f57f17' },
   };
 
+  // Simple markdown renderer for chat messages
+  const renderMarkdown = (text: string) => {
+    const parts: React.ReactNode[] = [];
+    // Split by code blocks first, then handle inline formatting
+    const segments = text.split(/(`[^`]+`)/g);
+    segments.forEach((seg, i) => {
+      if (seg.startsWith('`') && seg.endsWith('`')) {
+        parts.push(<code key={i} style={{ backgroundColor: 'rgba(0,0,0,0.15)', padding: '1px 4px', borderRadius: '3px', fontSize: '12px', fontFamily: 'monospace' }}>{seg.slice(1, -1)}</code>);
+      } else {
+        // Handle **bold** and *italic*
+        const boldItalic = seg.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+        boldItalic.forEach((part, j) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            parts.push(<strong key={`${i}-${j}`}>{part.slice(2, -2)}</strong>);
+          } else if (part.startsWith('*') && part.endsWith('*')) {
+            parts.push(<em key={`${i}-${j}`}>{part.slice(1, -1)}</em>);
+          } else {
+            parts.push(part);
+          }
+        });
+      }
+    });
+    return parts;
+  };
+
   // Structured chat card renderer
   const renderChatMessage = (msg: typeof chatHistory[0], idx: number) => {
     if (msg.sender === 'user') {
@@ -416,7 +441,7 @@ export function LearnModePage() {
       return (
         <div key={idx} style={{ marginBottom: '10px', display: 'flex', justifyContent: 'flex-end' }}>
           <div style={{ padding: '8px 12px', backgroundColor: '#007bff', color: '#fff', fontSize: '13px', maxWidth: '85%', borderRadius: '4px', whiteSpace: 'pre-wrap' as const, lineHeight: '1.4' }}>
-            {msg.text}
+            {renderMarkdown(msg.text)}
           </div>
         </div>
       );
@@ -437,7 +462,7 @@ export function LearnModePage() {
       return (
         <div key={idx} style={{ marginBottom: '10px', display: 'flex', justifyContent: 'flex-start' }}>
           <div style={{ padding: '8px 12px', backgroundColor: '#e8e8e8', color: '#000', fontSize: '13px', maxWidth: '85%', borderRadius: '4px', whiteSpace: 'pre-wrap' as const, lineHeight: '1.4' }}>
-            {msg.text}
+            {renderMarkdown(msg.text)}
             {msg.pairs && Object.keys(msg.pairs).length > 0 && (
               <div style={{ marginTop: '6px', fontSize: '10px', opacity: 0.7, borderTop: '1px solid rgba(0,0,0,0.15)', paddingTop: '4px' }}>
                 Grid updated
@@ -460,7 +485,7 @@ export function LearnModePage() {
           </div>
           {/* Card body */}
           <div style={{ padding: '10px 12px', fontSize: '13px', lineHeight: '1.5', whiteSpace: 'pre-wrap' as const, color: '#333' }}>
-            {msg.text}
+            {renderMarkdown(msg.text)}
           </div>
           {/* Missing data chips for probes */}
           {mtype === 'probe' && msg.missingDataTypes && msg.missingDataTypes.length > 0 && (
