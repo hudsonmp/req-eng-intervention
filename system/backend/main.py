@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 from anthropic import Anthropic
 import httpx
+
+from monitor import LearningMonitor, KLI_SECTION_3_1, BLUESKY_SECTION_3_1
 
 load_dotenv()
 
@@ -29,6 +31,9 @@ supabase_admin: Client = create_client(
 
 # Initialize Anthropic client
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+# Initialize learning monitor (invisible metacognitive layer)
+learning_monitor = LearningMonitor(anthropic_client)
 
 # Supabase REST API endpoints
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -84,8 +89,42 @@ message_type values:
 - "test_scenario" — you have enough info to present a test with agent data
 - "discovery" — the TA just taught you something new (a requirement)
 - "clarification" — general discussion, no test data needed (agents can be empty {})
+- "run_test" — the TA submitted a structured test case for you to execute
 
-Coordinates are (x, y) integers 0–29 for the 30x30 grid.
+WHEN YOU RECEIVE A run_test MESSAGE:
+The TA has given you structured test data with: data types (the variables and their values), a test case description, and their expected output. You must:
+1. Execute the test using ONLY your currently defined matching logic and schema — do NOT invent new logic.
+2. Show the actual output your system would produce given the inputs.
+3. If the actual output differs from the TA's expected output, honestly report the mismatch.
+4. Ask the TA WHY it failed — what requirement are you missing? What should the correct behavior be?
+5. Set message_type to "discovery" if the TA's test reveals a new requirement you hadn't considered.
+6. If the test passes (your output matches expected), acknowledge it and set message_type to "test_scenario".
+
+Be specific about what went wrong. Show your reasoning step by step so the TA can identify the flawed logic.
+
+REQUIREMENT ENGINEERING MODE:
+After a test case reveals a failure or gap, you should transition into requirement engineering.
+In this mode, you:
+1. Acknowledge what went wrong in the test
+2. Ask the TA to define the requirement using this structure:
+   - AGENTS: Which entities are involved? (e.g., rider, vehicle, system)
+   - WHEN: Under what conditions does this requirement apply?
+   - THE SYSTEM SHOULD: What is the expected behavior?
+   - USING: What data types or attributes are needed?
+3. If the TA's requirement is incomplete or ambiguous, probe for specificity:
+   - "You said the system should [X], but what data do I need to check that?"
+   - "When you say [condition], does that also apply when [edge case]?"
+4. Once the TA defines a clear requirement, set message_type to "discovery"
+   and include it in discovered_requirements
+5. Then propose a NEW test case that validates the newly defined requirement
+   — ideally one that also exposes the NEXT undiscovered requirement
+
+The cycle is: test → failure → requirement definition → validation test → next failure.
+Each cycle should move the TA deeper into the requirement space.
+
+[PLACEHOLDER: Add examples of requirement engineering dialogues here]
+
+Coordinates are (x, y) integers 0–19 for the 20x20 grid.
 Keep messages concise. You are confused but earnest, not a lecturer."""
 
 
@@ -178,13 +217,75 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": exc.errors(), "body": exc.body}
     )
 
-# Store active websocket connections
-active_connections: List[WebSocket] = []
-
 
 @app.get("/")
 async def root():
     return {"message": "Rideshare Simulation API"}
+
+
+@app.get("/prompt")
+async def get_prompt():
+    """Return the current system prompt for editing."""
+    return {"prompt": SYSTEM_PROMPT}
+
+
+class PromptUpdate(BaseModel):
+    prompt: str
+
+
+@app.put("/prompt")
+async def update_prompt(update: PromptUpdate):
+    """Update the system prompt at runtime."""
+    global SYSTEM_PROMPT
+    SYSTEM_PROMPT = update.prompt
+    return {"success": True}
+
+
+@app.get("/monitor/state")
+async def get_monitor_state():
+    """Return the current learning monitor state (for debugging)."""
+    return {
+        "state": learning_monitor.current_state,
+        "turn_count": learning_monitor.turn_count,
+        "alex_context": learning_monitor.get_alex_context()
+    }
+
+
+@app.get("/monitor/prompts")
+async def get_all_prompts():
+    """Return all system prompts for the prompt editor."""
+    from monitor import MONITOR_PROMPT as MP
+    return {
+        "alex_prompt": SYSTEM_PROMPT,
+        "monitor_prompt": MP,
+        "kli_section": KLI_SECTION_3_1,
+        "bluesky_section": BLUESKY_SECTION_3_1
+    }
+
+
+class AllPromptsUpdate(BaseModel):
+    alex_prompt: Optional[str] = None
+    monitor_prompt: Optional[str] = None
+    kli_section: Optional[str] = None
+    bluesky_section: Optional[str] = None
+
+
+@app.put("/monitor/prompts")
+async def update_all_prompts(update: AllPromptsUpdate):
+    """Update any/all system prompts at runtime."""
+    global SYSTEM_PROMPT
+    import monitor as mon
+
+    if update.alex_prompt is not None:
+        SYSTEM_PROMPT = update.alex_prompt
+    if update.monitor_prompt is not None:
+        mon.MONITOR_PROMPT = update.monitor_prompt
+    if update.kli_section is not None:
+        mon.KLI_SECTION_3_1 = update.kli_section
+    if update.bluesky_section is not None:
+        mon.BLUESKY_SECTION_3_1 = update.bluesky_section
+
+    return {"success": True}
 
 
 @app.get("/chat/init")
@@ -281,15 +382,27 @@ async def send_chat_message(chat: ChatMessage):
             user_content = f"[Timestamp: {chat.timestamp_minutes} minutes into study]\n\n{chat.message}"
         messages.append({"role": "user", "content": user_content})
 
+        # Get monitor context (invisible to student) to steer Alex's probing
+        monitor_context = learning_monitor.get_alex_context()
+        alex_system = SYSTEM_PROMPT + monitor_context
+
         # Call Anthropic API with prompt caching
+        # Block 1: KLI + BlueSky (static, cached across all calls)
+        # Block 2: Alex prompt + monitor diagnosis (changes per turn)
         response = anthropic_client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=4096,
-            system=[{
-                "type": "text",
-                "text": SYSTEM_PROMPT,
-                "cache_control": {"type": "ephemeral"}
-            }],
+            system=[
+                {
+                    "type": "text",
+                    "text": KLI_SECTION_3_1 + "\n\n" + BLUESKY_SECTION_3_1,
+                    "cache_control": {"type": "ephemeral"}
+                },
+                {
+                    "type": "text",
+                    "text": alex_system
+                }
+            ],
             messages=messages,
             thinking={
                 "type": "enabled",
@@ -336,6 +449,16 @@ async def send_chat_message(chat: ChatMessage):
                         agent_attribute_pairs = parsed
         except Exception as e:
             print(f"JSON parsing error: {e}")
+
+        # Run the learning monitor asynchronously (student never sees this)
+        # Include the assistant reply in history for analysis
+        monitor_history = list(messages)  # copy
+        monitor_history.append({"role": "assistant", "content": reply_text})
+        try:
+            monitor_state = learning_monitor.analyze(monitor_history)
+            print(f"Monitor: {json.dumps(monitor_state, indent=2)[:500]}")
+        except Exception as me:
+            print(f"Monitor analysis failed (non-blocking): {me}")
 
         return {
             "success": True,
@@ -630,47 +753,6 @@ async def stop_simulation():
     """Stop the simulation"""
     return {"status": "stopped"}
 
-
-@app.websocket("/ws/chat")
-async def websocket_chat(websocket: WebSocket):
-    """WebSocket endpoint for chat communication"""
-    await websocket.accept()
-    active_connections.append(websocket)
-    
-    try:
-        while True:
-            data = await websocket.receive_text()
-            message = json.loads(data)
-            
-            # Echo back for now (replace with actual chat logic)
-            response = {
-                "sender": "student",
-                "text": f"Received: {message.get('text', '')}"
-            }
-            
-            await websocket.send_text(json.dumps(response))
-    except Exception as e:
-        print(f"WebSocket error: {e}")
-    finally:
-        active_connections.remove(websocket)
-
-
-@app.websocket("/ws/simulation")
-async def websocket_simulation(websocket: WebSocket):
-    """WebSocket endpoint for simulation updates"""
-    await websocket.accept()
-    active_connections.append(websocket)
-    
-    try:
-        while True:
-            # Send simulation updates
-            data = await websocket.receive_text()
-            # Process simulation commands if needed
-            pass
-    except Exception as e:
-        print(f"WebSocket error: {e}")
-    finally:
-        active_connections.remove(websocket)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Prompt Editor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #1a1a2e; padding: 16px; color: #e0e0e0; }
+  .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  h1 { font-size: 16px; color: #fff; }
+  .status { font-size: 11px; color: #888; }
+  .status.saved { color: #4caf50; }
+  .status.error { color: #ef5350; }
+  .tabs { display: flex; gap: 2px; margin-bottom: 8px; }
+  .tab {
+    padding: 8px 16px; font-size: 12px; font-weight: 600; border: none; cursor: pointer;
+    border-radius: 4px 4px 0 0; transition: background 0.15s;
+  }
+  .tab.active { color: #fff; }
+  .tab:not(.active) { background: #2a2a4a; color: #888; }
+  .tab[data-tab="alex"] { border-bottom: 2px solid transparent; }
+  .tab[data-tab="alex"].active { background: #1565c0; border-bottom: 2px solid #42a5f5; }
+  .tab[data-tab="monitor"] { border-bottom: 2px solid transparent; }
+  .tab[data-tab="monitor"].active { background: #6a1b9a; border-bottom: 2px solid #ab47bc; }
+  .tab[data-tab="kli"] { border-bottom: 2px solid transparent; }
+  .tab[data-tab="kli"].active { background: #2e7d32; border-bottom: 2px solid #66bb6a; }
+  .tab[data-tab="bluesky"] { border-bottom: 2px solid transparent; }
+  .tab[data-tab="bluesky"].active { background: #e65100; border-bottom: 2px solid #ff9800; }
+  textarea {
+    width: 100%; height: calc(100vh - 120px); padding: 14px; font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12.5px; line-height: 1.55; border: 1px solid #333; border-radius: 0 4px 4px 4px; resize: none;
+    background: #16213e; color: #c9d1d9; tab-size: 2;
+  }
+  textarea:focus { outline: 1px solid #42a5f5; border-color: #42a5f5; }
+  button.save { padding: 6px 16px; font-size: 12px; font-weight: 600; border: none; border-radius: 4px; cursor: pointer; background: #42a5f5; color: #fff; }
+  button.save:hover { background: #1e88e5; }
+  button.state { padding: 6px 12px; font-size: 11px; border: 1px solid #444; background: #2a2a4a; color: #aaa; border-radius: 4px; cursor: pointer; margin-left: 8px; }
+  button.state:hover { background: #3a3a5a; color: #fff; }
+  .monitor-panel { display: none; position: fixed; right: 16px; top: 16px; width: 400px; max-height: 90vh; background: #16213e; border: 1px solid #444; border-radius: 4px; overflow-y: auto; z-index: 100; }
+  .monitor-panel.open { display: block; }
+  .monitor-panel pre { padding: 12px; font-size: 11px; color: #aed581; white-space: pre-wrap; }
+  .monitor-panel .header { padding: 8px 12px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+  .monitor-panel .header span { font-size: 11px; font-weight: 700; color: #ab47bc; text-transform: uppercase; letter-spacing: 0.5px; }
+  .monitor-panel .close { background: none; border: none; color: #888; cursor: pointer; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div>
+    <h1>System Prompt Editor</h1>
+    <div class="status" id="status">Loading...</div>
+  </div>
+  <div>
+    <button class="save" onclick="save()">Save (Cmd+S)</button>
+    <button class="state" onclick="toggleMonitor()">Monitor State</button>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab active" data-tab="alex" onclick="switchTab('alex')">Alex (Student LLM)</button>
+  <button class="tab" data-tab="monitor" onclick="switchTab('monitor')">Monitor LLM</button>
+  <button class="tab" data-tab="kli" onclick="switchTab('kli')">KLI &sect;3.1</button>
+  <button class="tab" data-tab="bluesky" onclick="switchTab('bluesky')">BlueSky &sect;3.1</button>
+</div>
+<textarea id="editor" spellcheck="false"></textarea>
+
+<div class="monitor-panel" id="monitorPanel">
+  <div class="header">
+    <span>Learning Monitor State</span>
+    <button class="close" onclick="toggleMonitor()">&times;</button>
+  </div>
+  <pre id="monitorContent">Loading...</pre>
+</div>
+
+<script>
+const BACKEND = 'http://localhost:8000';
+let currentTab = 'alex';
+let prompts = {};
+
+async function load() {
+  try {
+    const res = await fetch(BACKEND + '/monitor/prompts');
+    prompts = await res.json();
+    document.getElementById('editor').value = prompts.alex_prompt || '';
+    setStatus('Loaded all prompts');
+  } catch(e) {
+    setStatus('Failed to load: ' + e.message, 'error');
+  }
+}
+
+function switchTab(tab) {
+  // Save current tab content before switching
+  const editor = document.getElementById('editor');
+  if (currentTab === 'alex') prompts.alex_prompt = editor.value;
+  else if (currentTab === 'monitor') prompts.monitor_prompt = editor.value;
+  else if (currentTab === 'kli') prompts.kli_section = editor.value;
+  else if (currentTab === 'bluesky') prompts.bluesky_section = editor.value;
+
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+
+  if (tab === 'alex') editor.value = prompts.alex_prompt || '';
+  else if (tab === 'monitor') editor.value = prompts.monitor_prompt || '';
+  else if (tab === 'kli') editor.value = prompts.kli_section || '';
+  else if (tab === 'bluesky') editor.value = prompts.bluesky_section || '';
+}
+
+async function save() {
+  const editor = document.getElementById('editor');
+  // Capture current tab
+  if (currentTab === 'alex') prompts.alex_prompt = editor.value;
+  else if (currentTab === 'monitor') prompts.monitor_prompt = editor.value;
+  else if (currentTab === 'kli') prompts.kli_section = editor.value;
+  else if (currentTab === 'bluesky') prompts.bluesky_section = editor.value;
+
+  try {
+    const res = await fetch(BACKEND + '/monitor/prompts', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(prompts)
+    });
+    const data = await res.json();
+    if (data.success) setStatus('All prompts saved — takes effect next message', 'saved');
+    else setStatus('Save failed', 'error');
+  } catch(e) {
+    setStatus('Save failed: ' + e.message, 'error');
+  }
+}
+
+async function toggleMonitor() {
+  const panel = document.getElementById('monitorPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    try {
+      const res = await fetch(BACKEND + '/monitor/state');
+      const data = await res.json();
+      document.getElementById('monitorContent').textContent = JSON.stringify(data, null, 2);
+    } catch(e) {
+      document.getElementById('monitorContent').textContent = 'Error: ' + e.message;
+    }
+  }
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(); }
+});
+
+load();
+</script>
+</body>
+</html>
