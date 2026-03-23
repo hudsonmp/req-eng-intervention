@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Figure: Prompt &rarr; Requirements Mapping</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&display=swap');
+
+  :root {
+    --r1: #0072B2; --r2: #E69F00; --r3: #009E73; --r4: #CC79A7; --r5: #D55E00; --r6: #56B4E9;
+    --r1-bg: #0072B220; --r2-bg: #E69F0020; --r3-bg: #009E7320; --r4-bg: #CC79A720; --r5-bg: #D55E0020; --r6-bg: #56B4E920;
+    --r1-border: #0072B260; --r2-border: #E69F0060; --r3-border: #009E7360; --r4-border: #CC79A760; --r5-border: #D55E0060; --r6-border: #56B4E960;
+    --attr: #6A5ACD; --attr-bg: #6A5ACD18; --attr-border: #6A5ACD50;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Source Serif 4', 'Times New Roman', serif;
+    background: #fff; color: #1a1a1a; line-height: 1.6;
+    padding: 20px 24px; margin: 0 auto; font-size: 10pt;
+  }
+
+  .r1 { background: var(--r1-bg); border-bottom: 2px solid var(--r1); padding: 1px 2px; border-radius: 2px; }
+  .r2 { background: var(--r2-bg); border-bottom: 2px solid var(--r2); padding: 1px 2px; border-radius: 2px; }
+  .r3 { background: var(--r3-bg); border-bottom: 2px solid var(--r3); padding: 1px 2px; border-radius: 2px; }
+  .r4 { background: var(--r4-bg); border-bottom: 2px solid var(--r4); padding: 1px 2px; border-radius: 2px; }
+  .r5 { background: var(--r5-bg); border-bottom: 2px solid var(--r5); padding: 1px 2px; border-radius: 2px; }
+  .r6 { background: var(--r6-bg); border-bottom: 2px solid var(--r6); padding: 1px 2px; border-radius: 2px; }
+  .attr { background: var(--attr-bg); border-bottom: 1.5px dashed var(--attr); padding: 1px 2px; border-radius: 2px; }
+
+  [data-req]::after {
+    content: attr(data-req); position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+    font-family: 'Source Code Pro', monospace; font-size: 7pt; font-weight: 500;
+    padding: 2px 5px; border-radius: 3px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 10;
+  }
+  [data-req] { position: relative; cursor: default; }
+  [data-req]:hover::after { opacity: 1; }
+  .r1[data-req]::after { background: var(--r1); color: #fff; }
+  .r2[data-req]::after { background: var(--r2); color: #fff; }
+  .r3[data-req]::after { background: var(--r3); color: #fff; }
+  .r4[data-req]::after { background: var(--r4); color: #1a1a1a; }
+  .r5[data-req]::after { background: var(--r5); color: #fff; }
+  .r6[data-req]::after { background: var(--r6); color: #1a1a1a; }
+  .attr[data-req]::after { background: var(--attr); color: #fff; }
+
+  /* === 2x2 grid: [prompt | requirements] x 2 rows === */
+  .grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0;
+    border: 1px solid #ccc;
+  }
+  .grid-2x2 > * { padding: 14px 16px; }
+
+  /* Column headers */
+  .col-header {
+    font-family: 'Source Code Pro', monospace; font-size: 7.5pt; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: #666;
+    padding: 8px 16px !important; background: #f5f5f5; border-bottom: 1px solid #ccc;
+  }
+
+  /* Cells */
+  .cell { border-bottom: 1px solid #e0e0e0; }
+  .cell:nth-child(even) { border-left: 1px solid #e0e0e0; }
+  .cell-prompt { background: #fafafa; }
+  .cell-reqs { background: #fff; }
+
+  /* Row labels */
+  .row-label {
+    font-family: 'Source Code Pro', monospace; font-size: 7pt; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.5px; color: #999;
+    margin-bottom: 6px; padding-bottom: 3px; border-bottom: 1px solid #e8e8e8;
+  }
+
+  /* Prompt content */
+  .prompt-content { font-size: 9.5pt; line-height: 1.65; }
+  .prompt-content p { margin-bottom: 6px; text-align: justify; }
+  .prompt-content .scenario {
+    margin: 8px 0; padding: 8px 12px; background: #f0f0f0;
+    border-left: 3px solid #999; font-style: italic; line-height: 1.55;
+  }
+
+  /* Requirement list in right column */
+  .req-list { display: flex; flex-direction: column; gap: 0; }
+  .req-item {
+    display: flex; align-items: flex-start; gap: 5px;
+    padding: 4px 0; font-size: 8pt; line-height: 1.4;
+    border-bottom: 1px solid #f0f0f0; position: relative;
+  }
+  .req-item:last-child { border-bottom: none; }
+  .req-id {
+    font-family: 'Source Code Pro', monospace; font-size: 7pt; font-weight: 500;
+    padding: 1px 4px; border-radius: 3px; flex-shrink: 0; white-space: nowrap;
+  }
+  .req-id.c1 { background: var(--r1-bg); color: var(--r1); border: 1px solid var(--r1-border); }
+  .req-id.c2 { background: var(--r2-bg); color: var(--r2); border: 1px solid var(--r2-border); }
+  .req-id.c3 { background: var(--r3-bg); color: var(--r3); border: 1px solid var(--r3-border); }
+  .req-id.c4 { background: var(--r4-bg); color: var(--r4); border: 1px solid var(--r4-border); }
+  .req-id.c5 { background: var(--r5-bg); color: var(--r5); border: 1px solid var(--r5-border); }
+  .req-id.c6 { background: var(--r6-bg); color: var(--r6); border: 1px solid var(--r6-border); }
+  .req-id.ca { background: var(--attr-bg); color: var(--attr); border: 1px solid var(--attr-border); }
+  .req-text { color: #444; }
+
+  .req-item .del-btn {
+    display: none; position: absolute; top: -4px; right: -4px;
+    width: 12px; height: 12px; border-radius: 50%; border: 1px solid #ccc;
+    background: #fff; color: #999; font-size: 9px; line-height: 10px; text-align: center;
+    cursor: pointer; z-index: 5;
+  }
+  .req-item:hover .del-btn { display: block; }
+  .req-item .del-btn:hover { background: #f44; color: #fff; border-color: #f44; }
+
+  [contenteditable]:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; gap: 5px; flex-wrap: wrap; align-items: center;
+    margin-bottom: 12px; padding: 7px 10px;
+    background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;
+    font-family: 'Source Code Pro', monospace; font-size: 8pt;
+  }
+  .toolbar button {
+    padding: 2px 8px; border-radius: 3px; border: 1px solid; cursor: pointer;
+    font-family: 'Source Code Pro', monospace; font-size: 7.5pt; font-weight: 500;
+  }
+  .toolbar button:hover { opacity: 0.85; }
+  .tb-r1 { background: var(--r1-bg); border-color: var(--r1-border) !important; color: var(--r1); }
+  .tb-r2 { background: var(--r2-bg); border-color: var(--r2-border) !important; color: var(--r2); }
+  .tb-r3 { background: var(--r3-bg); border-color: var(--r3-border) !important; color: var(--r3); }
+  .tb-r4 { background: var(--r4-bg); border-color: var(--r4-border) !important; color: var(--r4); }
+  .tb-r5 { background: var(--r5-bg); border-color: var(--r5-border) !important; color: var(--r5); }
+  .tb-r6 { background: var(--r6-bg); border-color: var(--r6-border) !important; color: var(--r6); }
+  .tb-attr { background: var(--attr-bg); border-color: var(--attr-border) !important; color: var(--attr); }
+  .tb-clear { background: #fff; border-color: #ccc !important; color: #666; }
+  .toolbar .sep { width: 1px; height: 16px; background: #ddd; margin: 0 3px; }
+
+  @media print {
+    .toolbar { display: none; }
+    body { padding: 0.5in; }
+    .del-btn { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar" id="toolbar">
+  <span style="color:#888; margin-right: 3px;">Highlight:</span>
+  <span id="hl-buttons"></span>
+  <div class="sep"></div>
+  <button class="tb-clear" onclick="removeHL()">Unhighlight</button>
+  <button class="tb-clear" onclick="removeAllHL()">Unhighlight All</button>
+  <div class="sep"></div>
+  <button class="tb-clear" onclick="exportHTML()">Export</button>
+  <button class="tb-clear" onclick="clearCache()" style="color:#c00;">Reset</button>
+</div>
+
+<div class="grid-2x2" id="grid">
+
+  <!-- Column headers -->
+  <div class="col-header">Prompt</div>
+  <div class="col-header" style="border-left:1px solid #ccc;">Requirements Surfaced</div>
+
+  <!-- ROW 1: Novice -->
+  <div class="cell cell-prompt" id="cell-p1">
+    <div class="row-label" contenteditable="true">Prompt for AI-assisted programming of rideshare system &mdash; Novice</div>
+    <div class="prompt-content" contenteditable="true">
+      <p>You are creating a rideshare matching system that <span class="hl-requirement1" data-req="Requirement 1">matches autonomous rideshare vehicles with riders via an app.</span> The system must look at the <span class="hl-attribute1" data-req="Attribute 1">current location of the rider</span> and the <span class="hl-attribute2" data-req="Attribute 2">current location of the vehicle</span> when the request is made and <span class="hl-requirement1" data-req="Requirement 1">match</span> <span class="hl-attribute3" data-req="Attribute 3">the nearest vehicle</span> <span class="hl-requirement1" data-req="Requirement 1">with the nearest vehicle.</span> Consider <span class="hl-requirement2" data-req="Requirement 2">all vehicles in the possible matching.</span></p>
+    </div>
+  </div>
+
+  <div class="cell cell-reqs" id="cell-r1" style="border-left:1px solid #e0e0e0;">
+    <div class="row-label">Requirements</div>
+    <div class="req-list" id="reqs1">
+      <div class="req-item"><span class="del-btn" onclick="this.parentElement.remove();onReqChange()">&times;</span><span class="req-id" style="background:#E69F0020;color:#E69F00;border:1px solid #E69F0060">Attribute 1</span><span class="req-text" contenteditable="true">Current vehicle location</span></div>
+      <div class="req-item"><span class="del-btn" onclick="this.parentElement.remove();onReqChange()">&times;</span><span class="req-id" style="background:#009E7320;color:#009E73;border:1px solid #009E7360">Attribute 2</span><span class="req-text" contenteditable="true">Rider pickup location</span></div>
+      <div class="req-item"><span class="del-btn" onclick="this.parentElement.remove();onReqChange()">&times;</span><span class="req-id" style="background:#CC79A720;color:#CC79A7;border:1px solid #CC79A760">Attribute 3</span><span class="req-text" contenteditable="true">Distance between rider and vehicle</span></div>
+      <div class="req-item"><span class="del-btn" onclick="this.parentElement.remove();onReqChange()">&times;</span><span class="req-id" style="background:#D55E0020;color:#D55E00;border:1px solid #D55E0060">Requirement 1</span><span class="req-text" contenteditable="true">Match nearest vehicle with nearest rider</span></div>
+      <div class="req-item"><span class="del-btn" onclick="this.parentElement.remove();onReqChange()">&times;</span><span class="req-id" style="background:#56B4E920;color:#56B4E9;border:1px solid #56B4E960">Requirement 2</span><span class="req-text" contenteditable="true">Once vehicle is assigned, it can be assigned again</span></div>
+    </div>
+    <div style="margin-top:6px;font-size:7pt;color:#999;cursor:pointer;" onclick="addReqTo('reqs1')">+ add requirement</div>
+  </div>
+
+  <!-- ROW 2: Expert -->
+  <div class="cell cell-prompt" id="cell-p2">
+    <div class="row-label" contenteditable="true">Prompt for AI-assisted programming of rideshare system &mdash; Expert</div>
+    <div class="prompt-content" contenteditable="true" style="min-height:150px;">
+      <p><br></p>
+    </div>
+  </div>
+
+  <div class="cell cell-reqs" id="cell-r2" style="border-left:1px solid #e0e0e0;">
+    <div class="row-label">Requirements</div>
+    <div class="req-list" id="reqs2">
+    </div>
+    <div style="margin-top:6px;font-size:7pt;color:#999;cursor:pointer;" onclick="addReqTo('reqs2')">+ add requirement</div>
+  </div>
+
+</div>
+
+<!-- Summary table + scenario stacked vertically -->
+<div style="max-width:460px;margin:20px auto;display:flex;flex-direction:column;gap:16px;">
+
+  <div id="summary-table" style="font-family:'Source Code Pro',monospace;font-size:10pt;border:1px solid #ddd;border-radius:4px;overflow:hidden;"></div>
+
+  <div style="font-family:'Source Serif 4','Times New Roman',serif;font-size:10pt;line-height:1.65;color:#333;padding:12px 14px;background:#fafafa;border:1px solid #e0e0e0;border-radius:4px;">
+    <div style="font-family:'Source Code Pro',monospace;font-size:7pt;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:#888;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #e0e0e0;">Test Case Scenario</div>
+    There is one vehicle currently active in the system. It is unoccupied. Rider 1 requested a ride at 13:00 and is located four blocks east of the vehicle. Rider 2 requested a ride at 13:05 and is located three blocks south of Rider 1. Rider 3 requested a ride at 13:10 and is located five blocks east of Rider 2. The vehicle picks up Rider 1 <span style="font-family:'Source Code Pro',monospace;font-size:9pt;color:#E74C3C;font-weight:600">(1)</span>, drives south to Rider 2 <span style="font-family:'Source Code Pro',monospace;font-size:9pt;color:#27AE60;font-weight:600">(3)</span>, picks up Rider 2 <span style="font-family:'Source Code Pro',monospace;font-size:9pt;color:#27AE60;font-weight:600">(5)</span>, drops off Rider 1 <span style="font-family:'Source Code Pro',monospace;font-size:9pt;color:#E74C3C;font-weight:600">(4)</span>, picks up Rider 3 <span style="font-family:'Source Code Pro',monospace;font-size:9pt;color:#2980B9;font-weight:600">(8)</span>, drops off Rider 3 <span style="font-family:'Source Code Pro',monospace;font-size:9pt;color:#2980B9;font-weight:600">(9)</span>, and drops off Rider 2 <span style="font-family:'Source Code Pro',monospace;font-size:9pt;color:#27AE60;font-weight:600">(7)</span>. The routing must account for request time priority, vehicle occupancy during transit, and optimal chaining of pickups and dropoffs across all three riders.
+  </div>
+
+</div>
+
+<script>
+function updateSummary() {
+  const classify = (label) => {
+    const l = label.trim().toLowerCase();
+    if (l.startsWith('goal') || l.startsWith('g')) return 'goal';
+    if (l.startsWith('attribute') || l.startsWith('a')) return 'attr';
+    if (l.startsWith('requirement') || l.startsWith('req') || l.startsWith('r')) return 'req';
+    return 'other';
+  };
+  const countList = (listId) => {
+    const items = document.querySelectorAll('#' + listId + ' .req-id');
+    let g = 0, a = 0, r = 0;
+    items.forEach(el => {
+      const c = classify(el.textContent);
+      if (c === 'goal') g++;
+      else if (c === 'attr') a++;
+      else if (c === 'req') r++;
+    });
+    return { g, a, r, t: g + a + r };
+  };
+  const n = countList('reqs1');
+  const e = countList('reqs2');
+  const n_goal = n.g, n_attr = n.a, n_req = n.r, n_total = n.t;
+  const e_goal = e.g, e_attr = e.a, e_req = e.r, e_total = e.t;
+
+  const NC = '#E67E22', EC = '#2980B9', GC = '#27AE60', RC = '#C0392B', AC = '#E67E22';
+
+  const row = (label, nv, ev, color) => `
+    <tr>
+      <td style="padding:10px 14px;font-size:9pt;font-weight:600;color:${color};border-bottom:1px solid #f0f0f0">${label}</td>
+      <td style="text-align:center;padding:10px 14px;font-size:13pt;font-weight:700;color:${NC};border-bottom:1px solid #f0f0f0">${nv}</td>
+      <td style="text-align:center;padding:10px 14px;font-size:13pt;font-weight:700;color:${EC};border-bottom:1px solid #f0f0f0">${ev}</td>
+    </tr>`;
+
+  document.getElementById('summary-table').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;">
+      <tr>
+        <td style="padding:8px 14px;font-size:7pt;color:#aaa;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1.5px solid #ddd"></td>
+        <td style="text-align:center;padding:8px 14px;font-size:8pt;font-weight:800;color:${NC};text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #ddd">Novice</td>
+        <td style="text-align:center;padding:8px 14px;font-size:8pt;font-weight:800;color:${EC};text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #ddd">Expert</td>
+      </tr>
+      ${row('Goals', n_goal, e_goal, GC)}
+      ${row('Attributes', n_attr, e_attr, AC)}
+      ${row('Requirements', n_req, e_req, RC)}
+      <tr style="border-top:1.5px solid #ddd">
+        <td style="padding:12px 14px;font-size:10pt;font-weight:800;color:#333">Total</td>
+        <td style="text-align:center;padding:12px 14px;font-size:18pt;font-weight:800;color:${NC}">${n_total}</td>
+        <td style="text-align:center;padding:12px 14px;font-size:18pt;font-weight:800;color:${EC}">${e_total}</td>
+      </tr>
+    </table>`;
+}
+
+const CACHE_KEY = 'fig3_req_2x2_v2';
+const PALETTE = ['#0072B2','#E69F00','#009E73','#CC79A7','#D55E00','#56B4E9','#F0E442','#8B4513','#999','#E31A1C','#33A02C','#6A3D9A','#FF7F00','#1F78B4'];
+const labelColorMap = {}; // label -> color
+let nextColorIdx = 0;
+
+// Get or assign a color for a label
+function colorFor(label) {
+  if (labelColorMap[label]) return labelColorMap[label];
+  const c = PALETTE[nextColorIdx % PALETTE.length];
+  nextColorIdx++;
+  labelColorMap[label] = c;
+  ensureCSS(label, c);
+  return c;
+}
+
+// Inject CSS for a label's highlight class
+function ensureCSS(label, color) {
+  const cls = cssClass(label);
+  if (document.getElementById('style-' + cls)) return;
+  const st = document.createElement('style');
+  st.id = 'style-' + cls;
+  st.textContent = `.${cls}{background:${color}20;border-bottom:2px solid ${color};padding:1px 2px;border-radius:2px;}.${cls}[data-req]::after{background:${color};color:#fff;}`;
+  document.head.appendChild(st);
+}
+
+function cssClass(label) {
+  return 'hl-' + label.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+// Scan all req-items across both lists, seed the palette
+function seedColors() {
+  document.querySelectorAll('.req-item .req-id').forEach(el => {
+    const label = el.textContent.trim();
+    if (!labelColorMap[label]) {
+      // try to read color from existing inline style or class
+      const existing = el.style.color || window.getComputedStyle(el).color;
+      colorFor(label);
+    }
+  });
+  // Also scan highlights in prompts
+  document.querySelectorAll('.prompt-content [data-req]').forEach(el => {
+    colorFor(el.getAttribute('data-req'));
+  });
+}
+
+// Rebuild toolbar highlight buttons from all unique labels
+function rebuildButtons() {
+  const container = document.getElementById('hl-buttons');
+  container.innerHTML = '';
+  const labels = new Set();
+  document.querySelectorAll('.req-item .req-id').forEach(el => labels.add(el.textContent.trim()));
+  labels.forEach(label => {
+    const color = colorFor(label);
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    btn.style.background = color + '20';
+    btn.style.color = color;
+    btn.style.borderColor = color + '60';
+    btn.onclick = () => applyHL(cssClass(label), label);
+    container.appendChild(btn);
+  });
+}
+
+function applyHL(cls, label) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount || sel.isCollapsed) return;
+  colorFor(label); // ensure CSS exists
+  const range = sel.getRangeAt(0);
+  let a = range.commonAncestorContainer;
+  if (a.nodeType === 3) a = a.parentElement;
+  const existing = a.closest('.prompt-content [data-req]');
+  if (existing) unwrapSpan(existing);
+  const s2 = window.getSelection();
+  if (!s2.rangeCount || s2.isCollapsed) return;
+  const r2 = s2.getRangeAt(0);
+  const span = document.createElement('span');
+  span.className = cls;
+  span.setAttribute('data-req', label);
+  try { r2.surroundContents(span); }
+  catch (e) { const f = r2.extractContents(); span.appendChild(f); r2.insertNode(span); }
+  s2.removeAllRanges();
+  saveState();
+}
+
+function removeHL() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  let n = sel.getRangeAt(0).commonAncestorContainer;
+  if (n.nodeType === 3) n = n.parentElement;
+  const hl = n.closest('.prompt-content [data-req]');
+  if (hl) { unwrapSpan(hl); sel.removeAllRanges(); saveState(); }
+}
+
+function unwrapSpan(span) {
+  const p = span.parentNode;
+  while (span.firstChild) p.insertBefore(span.firstChild, span);
+  p.removeChild(span);
+  p.normalize();
+}
+
+function removeAllHL() {
+  document.querySelectorAll('.prompt-content [data-req]').forEach(s => unwrapSpan(s));
+  saveState();
+}
+
+function addReqTo(listId) {
+  const label = prompt('Label (e.g. R7, A2, attr):');
+  if (!label || !label.trim()) return;
+  const trimmed = label.trim();
+  const color = colorFor(trimmed);
+  const cls = cssClass(trimmed);
+  const list = document.getElementById(listId);
+  const item = document.createElement('div');
+  item.className = 'req-item';
+  item.innerHTML = `<span class="del-btn" onclick="this.parentElement.remove();onReqChange()">&times;</span><span class="req-id" style="background:${color}20;color:${color};border:1px solid ${color}60">${trimmed}</span><span class="req-text" contenteditable="true">New requirement</span>`;
+  list.appendChild(item);
+  onReqChange();
+}
+
+function onReqChange() {
+  rebuildButtons();
+  saveState();
+  updateSummary();
+}
+
+function saveState() {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ grid: document.getElementById('grid').innerHTML, colors: labelColorMap, nextIdx: nextColorIdx })); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    // Restore color assignments
+    if (s.colors) { Object.assign(labelColorMap, s.colors); }
+    if (s.nextIdx) nextColorIdx = s.nextIdx;
+    // Re-inject all CSS
+    for (const [label, color] of Object.entries(labelColorMap)) ensureCSS(label, color);
+    if (s.grid) document.getElementById('grid').innerHTML = s.grid;
+  } catch(e) {}
+}
+
+function clearCache() {
+  if (!confirm('Reset to defaults?')) return;
+  localStorage.removeItem(CACHE_KEY);
+  location.reload();
+}
+
+function exportHTML() {
+  const g = document.getElementById('grid').cloneNode(true);
+  g.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+  g.querySelectorAll('.del-btn').forEach(el => el.remove());
+  g.querySelectorAll('[onclick]').forEach(el => el.remove());
+  const css = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+  const blob = new Blob([
+    '<!DOCTYPE html><html><head><style>' + css + '</style></head><body style="padding:0.5in;margin:0 auto;">' + g.outerHTML + '</body></html>'
+  ], {type:'text/html'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'figure3-2x2.html'; a.click();
+}
+
+// Wire up
+document.getElementById('grid').addEventListener('input', () => {
+  clearTimeout(window._st);
+  window._st = setTimeout(saveState, 500);
+});
+
+// Use MutationObserver to rebuild buttons when req-items change
+const observer = new MutationObserver(() => { rebuildButtons(); });
+document.querySelectorAll('.req-list').forEach(el => observer.observe(el, { childList: true, subtree: true }));
+
+loadState();
+seedColors();
+rebuildButtons();
+updateSummary();
+</script>
+</body>
+</html>
